@@ -418,7 +418,7 @@ function _sfSourceAttribution() {
     footer.appendChild(icon);
 
     // Parse the translation: text before <a>, link text, text after </a>
-    const raw = i18n.t('spaceflight.data_source', 'Data provided by The Space Devs via Launch Library 2');
+    const raw = i18n.t('spaceflight.data_source', 'Data and images provided by The Space Devs via Launch Library 2');
     const aMatch = raw.match(/^(.*?)<a\s[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>(.*)$/i);
     if (aMatch) {
         if (aMatch[1]) footer.appendChild(document.createTextNode(aMatch[1]));
@@ -961,7 +961,19 @@ function _renderSpaceEvents(container, data) {
 
 function _makeEventCard(ev) {
     const card = document.createElement('div');
-    card.className = 'card mb-3 sf-event-card';
+    card.className = 'card mb-3 sf-event-card d-flex flex-row overflow-hidden';
+
+    // Left thumbnail, same visual system as launch cards.
+    if (ev.image_url) {
+        const img = document.createElement('img');
+        img.src = ev.image_url;
+        img.alt = '';
+        img.className = 'sf-events-card-img';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.addEventListener('error', () => { img.style.display = 'none'; });
+        card.appendChild(img);
+    }
 
     const body = document.createElement('div');
     body.className = 'card-body';
@@ -975,11 +987,25 @@ function _makeEventCard(ev) {
     title.textContent = ev.name || '—';
     titleWrap.appendChild(title);
 
+    const meta = document.createElement('div');
+    meta.className = 'd-flex flex-wrap gap-1 align-items-center';
     if (ev.type_name) {
         const type = document.createElement('span');
-        type.className = 'badge bg-info text-dark me-1';
+        type.className = 'badge bg-info text-dark';
         type.textContent = ev.type_name;
-        titleWrap.appendChild(type);
+        meta.appendChild(type);
+    }
+    if (ev.webcast_live) {
+        const live = document.createElement('span');
+        live.className = 'badge bg-danger sf-webcast-badge';
+        const liveIcon = document.createElement('i');
+        liveIcon.className = 'bi bi-broadcast me-1';
+        live.appendChild(liveIcon);
+        live.appendChild(document.createTextNode(i18n.t('spaceflight.webcast_live', 'Webcast Live')));
+        meta.appendChild(live);
+    }
+    if (meta.childElementCount > 0) {
+        titleWrap.appendChild(meta);
     }
     header.appendChild(titleWrap);
 
@@ -1029,6 +1055,41 @@ function _makeEventCard(ev) {
             progs.appendChild(badge);
         });
         body.appendChild(progs);
+    }
+
+    if (ev.video_url || ev.news_url) {
+        const actions = document.createElement('div');
+        actions.className = 'd-flex gap-2 mt-3 flex-wrap';
+
+        if (ev.video_url) {
+            const videoLink = document.createElement('a');
+            videoLink.href = ev.video_url;
+            videoLink.target = '_blank';
+            videoLink.rel = 'noopener noreferrer';
+            videoLink.className = ev.webcast_live ? 'btn btn-sm btn-danger' : 'btn btn-sm btn-outline-danger';
+
+            const videoIcon = document.createElement('i');
+            videoIcon.className = 'bi bi-play-circle me-1';
+            videoLink.appendChild(videoIcon);
+            videoLink.appendChild(document.createTextNode(i18n.t('spaceflight.watch_live', 'Watch Live')));
+            actions.appendChild(videoLink);
+        }
+
+        if (ev.news_url) {
+            const infoLink = document.createElement('a');
+            infoLink.href = ev.news_url;
+            infoLink.target = '_blank';
+            infoLink.rel = 'noopener noreferrer';
+            infoLink.className = 'btn btn-sm btn-outline-secondary';
+
+            const infoIcon = document.createElement('i');
+            infoIcon.className = 'bi bi-info-circle me-1';
+            infoLink.appendChild(infoIcon);
+            infoLink.appendChild(document.createTextNode(i18n.t('spaceflight.more_info', 'More info')));
+            actions.appendChild(infoLink);
+        }
+
+        body.appendChild(actions);
     }
 
     card.appendChild(body);

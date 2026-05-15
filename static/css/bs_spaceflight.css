@@ -38,15 +38,18 @@
 }
 
 /* --------------------------------------------------------------------------
-   Launch Cards
+   Launch & events Cards
    -------------------------------------------------------------------------- */
-.sf-launch-card-img {
+.sf-launch-card-img, .sf-events-card-img {
     width: 110px;
     flex-shrink: 0;
     align-self: stretch;
     object-fit: cover;
     object-position: center center;
     display: block;
+}
+.sf-events-card-img {
+    width: 160px;
 }
 
 .sf-launch-card:hover {
