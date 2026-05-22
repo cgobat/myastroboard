@@ -18,10 +18,6 @@ function resolveEventIconClass(event) {
     return event?.icon_class || 'bi bi-star-fill';
 }
 
-function resolveEventIconExtraClasses(event, baseClass = '') {
-    return [baseClass, event?.icon_color_class].filter(Boolean).join(' ');
-}
-
 function resolveEventBannerModifier(event) {
     const map = {
         'text-danger':    'critical',

@@ -9,46 +9,6 @@
     padding: 0;
 }
 
-/* Alert cards styling */
-.events-grid {
-    display: grid;
-    gap: 1rem;
-}
-
-/* Event summary cards */
-.event-summary-card {
-    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-    border-radius: var(--border-radius);
-}
-
-.event-summary-card:hover {
-    transform: var(--hover-lift-md);
-    box-shadow: var(--shadow-card-hover);
-}
-
-.event-summary-card .card-title {
-    font-size: 1rem;
-    color: var(--bs-body-color);
-}
-
-.event-summary-card .card-body {
-    display: flex;
-    flex-direction: column;
-}
-
-.event-summary-card .card-footer {
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-/* Event section title */
-.event-section-title {
-    font-weight: 600;
-    padding-top: 0.5rem;
-    padding-bottom: 0.25rem;
-    border-bottom: 2px solid var(--bs-primary);
-    display: inline-block;
-}
-
 /* ─── Event Banner ──────────────────────────────────────── */
 @keyframes eventBannerFadeIn {
     from { opacity: 0; transform: translateY(-5px); }
@@ -178,57 +138,4 @@
     transform: scale(1.35);
 }
 
-/* Event card buttons */
-.event-summary-card .btn-link {
-    color: var(--bs-primary);
-    text-decoration: none;
-    font-size: 0.875rem;
-    padding: 0 !important;
-    margin-right: 0.5rem;
-}
 
-.event-summary-card .btn-link:hover {
-    color: var(--bs-primary);
-    text-decoration: underline;
-}
-
-/* Loading indicator */
-#events-loading-indicator {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-}
-
-#events-loading-indicator .spinner-border {
-    width: 1.5rem;
-    height: 1.5rem;
-}
-
-/* Dark theme adjustments */
-[data-bs-theme="dark"] .event-summary-card {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-bs-theme="dark"] .event-summary-card:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .event-summary-card {
-        margin-bottom: 0.5rem;
-    }
-
-    .events-grid {
-        gap: 0.5rem;
-    }
-
-    .event-summary-card .card-body {
-        padding: 0.75rem !important;
-    }
-
-    .event-summary-card .card-title {
-        font-size: 0.95rem;
-    }
-}
