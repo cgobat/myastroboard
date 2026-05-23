@@ -213,6 +213,15 @@ jobs:
           PREVIOUS_TAG=$(git tag --sort=-version:refname | sed -n 2p)
 
           echo "## 🚀 What's Changed" > release_notes.md
+
+          # Inject changelog if the file exists and is not empty
+          if [ -s "CHANGELOG_NEXT.md" ]; then
+            echo "" >> release_notes.md
+            echo "### 📝 Changelog" >> release_notes.md
+            cat CHANGELOG_NEXT.md >> release_notes.md
+            echo "" >> release_notes.md
+          fi
+
           if [ -n "$PREVIOUS_TAG" ]; then
             echo "### 📋 Commits since $PREVIOUS_TAG:" >> release_notes.md
             git log "$PREVIOUS_TAG..$CURRENT_TAG" \
@@ -255,5 +264,18 @@ jobs:
           generate_release_notes: false
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clear CHANGELOG_NEXT after release
+        if: startsWith(github.ref, 'refs/tags/') && hashFiles('CHANGELOG_NEXT.md') != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Clear the file (without deleting it to keep the habit of editing it)
+          > CHANGELOG_NEXT.md
+          git add CHANGELOG_NEXT.md
+          git commit -m "chore: clear CHANGELOG_NEXT after release ${{ steps.version.outputs.VERSION }}"
+          git push origin HEAD:main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
