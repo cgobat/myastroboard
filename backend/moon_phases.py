@@ -192,11 +192,12 @@ class MoonService:
         return dt_local.isoformat(timespec='minutes')  # ex: "2026-02-03T20:28:00+01:00"
 
     def _next_astronomical_dark_window(self, start_local: datetime.datetime):
-        dt = start_local
-        found_start = None
+        max_days = 10
+        coarse_step_minutes = 15
+        fine_step_minutes = 1
 
-        for _ in range(60 * 24 * 10):  # search up to 10 days
-            utc = dt.astimezone(datetime.timezone.utc)
+        def _is_dark_moonless(dt_local: datetime.datetime) -> Optional[bool]:
+            utc = dt_local.astimezone(datetime.timezone.utc)
             t_astropy = AstroTime(utc)
 
             frame = AltAz(obstime=t_astropy, location=self.location)
@@ -204,19 +205,59 @@ class MoonService:
             moon_alt = self._coord_altitude_deg(get_body("moon", t_astropy), frame)
 
             if sun_alt is None or moon_alt is None:
-                dt += datetime.timedelta(minutes=5)
+                return None
+            return sun_alt < -18 and moon_alt < 0
+
+        def _refine_first_true(start_dt: datetime.datetime, end_dt: datetime.datetime) -> datetime.datetime:
+            dt_local = start_dt
+            while dt_local <= end_dt:
+                is_dark = _is_dark_moonless(dt_local)
+                if is_dark is True:
+                    return dt_local
+                dt_local += datetime.timedelta(minutes=fine_step_minutes)
+            return end_dt
+
+        def _refine_first_false(start_dt: datetime.datetime, end_dt: datetime.datetime) -> datetime.datetime:
+            dt_local = start_dt
+            while dt_local <= end_dt:
+                is_dark = _is_dark_moonless(dt_local)
+                if is_dark is False:
+                    return dt_local
+                dt_local += datetime.timedelta(minutes=fine_step_minutes)
+            return end_dt
+
+        dt = start_local
+        found_start: Optional[datetime.datetime] = None
+        max_steps = int((24 * 60 / coarse_step_minutes) * max_days)
+
+        # Coarse scan keeps Astropy calls low, then refine transition boundaries.
+        for _ in range(max_steps):
+            is_dark = _is_dark_moonless(dt)
+
+            if is_dark is None:
+                dt += datetime.timedelta(minutes=coarse_step_minutes)
                 continue
 
-            if sun_alt < -18 and moon_alt < 0:
+            if is_dark:
                 if found_start is None:
-                    found_start = dt
+                    coarse_window_start = max(
+                        start_local,
+                        dt - datetime.timedelta(minutes=coarse_step_minutes)
+                    )
+                    found_start = _refine_first_true(coarse_window_start, dt)
             else:
                 if found_start is not None:
+                    coarse_window_start = max(
+                        found_start,
+                        dt - datetime.timedelta(minutes=coarse_step_minutes)
+                    )
+                    refined_end = _refine_first_false(coarse_window_start, dt)
                     return (
                         self._fmt_time(found_start),
-                        self._fmt_time(dt)
+                        self._fmt_time(refined_end)
                     )
-            dt += datetime.timedelta(minutes=5)
+
+            dt += datetime.timedelta(minutes=coarse_step_minutes)
 
         return ("Not found", "Not found")
 

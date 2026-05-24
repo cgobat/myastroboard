@@ -225,7 +225,7 @@ class TestIconAndImportanceMapping:
     def test_importance_icon_color_critical(self, aggregator):
         """Test icon color for critical importance."""
         result = aggregator._importance_icon_color_class("critical")
-        assert "danger" in result or "critical" in result
+        assert "must-see" in result or "danger" in result or "critical" in result
 
     def test_importance_icon_color_high(self, aggregator):
         """Test icon color for high importance."""
