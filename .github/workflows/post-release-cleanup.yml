@@ -1,0 +1,53 @@
+name: Post-Release Cleanup
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to clean up (e.g. 0.8.1)'
+        required: true
+
+jobs:
+  clear-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            TAG="${{ github.event.release.tag_name }}"
+            echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create branch and PR to clear CHANGELOG_NEXT
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          BRANCH="bot/post-release-v${VERSION}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          truncate -s 0 CHANGELOG_NEXT.md
+          git add CHANGELOG_NEXT.md
+          git commit -m "chore: clear CHANGELOG_NEXT after release v${VERSION}"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "chore: clear CHANGELOG_NEXT after release v${VERSION}" \
+            --body "Automated cleanup after tagging release v${VERSION}." \
+            --base main \
+            --head "$BRANCH"

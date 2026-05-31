@@ -268,25 +268,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Clear CHANGELOG_NEXT after release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          BRANCH="chore/clear-changelog-${VERSION}"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git checkout -b "$BRANCH"
-          truncate -s 0 CHANGELOG_NEXT.md
-          git add CHANGELOG_NEXT.md
-          git commit -m "chore: clear CHANGELOG_NEXT after release v${VERSION}"
-          git push origin "$BRANCH"
-
-          gh pr create \
-            --title "chore: clear CHANGELOG_NEXT after release v${VERSION}" \
-            --body "Automated cleanup after tagging release v${VERSION}." \
-            --base main \
-            --head "$BRANCH"
