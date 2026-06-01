@@ -58,8 +58,9 @@ jobs:
       - name: Create branch and PR to clear CHANGELOG_NEXT
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
+          VERSION="${VERSION:-}"
 
           if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "Invalid VERSION output: $VERSION"
