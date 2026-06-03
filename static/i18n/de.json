@@ -85,7 +85,13 @@
     "license_title": "Lizenz",
     "license_text": "MyAstroBoard ist unter AGPL-3.0 lizenziert. Der Quellcode bleibt für bereitgestellte Versionen verfügbar.",
     "source_label": "Quell-Repository",
-    "issues_label": "Problem melden"
+    "issues_label": "Problem melden",
+    "credits_title": "Danksagungen",
+    "credits_intro": "MyAstroBoard basiert auf diesen Open-Source-Projekten und kostenlosen Datendiensten.",
+    "credits_frontend_title": "Frontend",
+    "credits_python_title": "Python-Bibliotheken",
+    "credits_apis_title": "Datenquellen & APIs",
+    "credits_catalogues_title": "Objektkataloge"
   },
   "planets": {
     "mercury": "Merkur",

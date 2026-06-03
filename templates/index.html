@@ -2494,6 +2494,113 @@
 
             <div class="shadow p-2 mb-3 rounded bg-sub-container">
                 <h2>
+                    <i class="bi bi-box-seam text-secondary icon-inline" aria-hidden="true"></i>
+                    <span data-i18n="about.credits_title">Credits &amp; Acknowledgements</span>
+                </h2>
+                <p class="text-muted small mb-3" data-i18n="about.credits_intro">MyAstroBoard is built on the shoulders of these open-source projects and free data services.</p>
+
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <!-- Frontend -->
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="bi bi-layout-text-window text-primary icon-inline" aria-hidden="true"></i>
+                                <span data-i18n="about.credits_frontend_title">Frontend</span>
+                            </div>
+                            <div class="card-body p-2">
+                                <ul class="list-unstyled mb-0 small">
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://getbootstrap.com" target="_blank" rel="noopener noreferrer">Bootstrap 5 <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- CSS framework</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://icons.getbootstrap.com" target="_blank" rel="noopener noreferrer">Bootstrap Icons <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- icon font</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://leafletjs.com" target="_blank" rel="noopener noreferrer">Leaflet <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- interactive maps</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.chartjs.org" target="_blank" rel="noopener noreferrer">Chart.js <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- charts</span></li>
+                                    <li class="mb-0 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://plotly.com/javascript/" target="_blank" rel="noopener noreferrer">Plotly.js <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- interactive plots</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Python -->
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="bi bi-code-slash text-success icon-inline" aria-hidden="true"></i>
+                                <span data-i18n="about.credits_python_title">Python libraries</span>
+                            </div>
+                            <div class="card-body p-2">
+                                <ul class="list-unstyled mb-0 small">
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://flask.palletsprojects.com" target="_blank" rel="noopener noreferrer">Flask <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- web framework</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.astropy.org" target="_blank" rel="noopener noreferrer">Astropy <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- astronomy core</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://astroplan.readthedocs.io" target="_blank" rel="noopener noreferrer">Astroplan <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- observation planning</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://rhodesmill.org/brandon/projects/astronomy-engine.html" target="_blank" rel="noopener noreferrer">astronomy-engine <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- planetary positions</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://rhodesmill.org/skyfield/" target="_blank" rel="noopener noreferrer">Skyfield <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- satellite tracking</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://pypi.org/project/sgp4/" target="_blank" rel="noopener noreferrer">SGP4 <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- orbit propagation</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://pyongc.readthedocs.io" target="_blank" rel="noopener noreferrer">PyOngc <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- NGC/IC catalog</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1">
+                                        <a class="fw-semibold text-decoration-none" href="https://numpy.org" target="_blank" rel="noopener noreferrer">NumPy <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a>
+                                        <span class="text-muted">/</span>
+                                        <a class="fw-semibold text-decoration-none" href="https://matplotlib.org" target="_blank" rel="noopener noreferrer">Matplotlib <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a>
+                                        <span class="text-muted">/</span>
+                                        <a class="fw-semibold text-decoration-none" href="https://pandas.pydata.org" target="_blank" rel="noopener noreferrer">Pandas <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a>
+                                    </li>
+                                    <li class="mb-0 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://github.com/web-push-libs/pywebpush" target="_blank" rel="noopener noreferrer">pywebpush <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- push notifications</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- APIs -->
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="bi bi-cloud-arrow-down text-info icon-inline" aria-hidden="true"></i>
+                                <span data-i18n="about.credits_apis_title">Data sources &amp; APIs</span>
+                            </div>
+                            <div class="card-body p-2">
+                                <ul class="list-unstyled mb-0 small">
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://open-meteo.com" target="_blank" rel="noopener noreferrer">Open-Meteo <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- weather forecast</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://thespacedevs.com/llapi" target="_blank" rel="noopener noreferrer">The Space Devs LL2 <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- spaceflight data</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://celestrak.org" target="_blank" rel="noopener noreferrer">CelesTrak <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- ISS TLE (primary)</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://tle.ivanstanojevic.me" target="_blank" rel="noopener noreferrer">Ivan Stanojevic TLE <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- ISS TLE (fallback)</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://wheretheiss.at" target="_blank" rel="noopener noreferrer">wheretheiss.at <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- ISS TLE (fallback)</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.7timer.info" target="_blank" rel="noopener noreferrer">7Timer! <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- atmospheric seeing</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://simbad.cds.unistra.fr" target="_blank" rel="noopener noreferrer">SIMBAD / CDS <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- object resolution &amp; sky images</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.minorplanetcenter.net" target="_blank" rel="noopener noreferrer">Minor Planet Center <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- comet ephemerides</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.iers.org" target="_blank" rel="noopener noreferrer">IERS <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- Earth orientation data</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.mediawiki.org/wiki/REST_API" target="_blank" rel="noopener noreferrer">Wikipedia REST API <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- object descriptions</span></li>
+                                    <li class="mb-0 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://github.com/mawinkler/uptonight" target="_blank" rel="noopener noreferrer">uptonight <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- YAML object catalogues</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Catalogues -->
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="bi bi-stars text-warning icon-inline" aria-hidden="true"></i>
+                                <span data-i18n="about.credits_catalogues_title">Object catalogues</span>
+                            </div>
+                            <div class="card-body p-2">
+                                <ul class="list-unstyled mb-0 small">
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://github.com/mattiaverga/OpenNGC" target="_blank" rel="noopener noreferrer">OpenNGC <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- NGC, IC, Messier</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=VII/20" target="_blank" rel="noopener noreferrer">Sharpless (Sh2) <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- HII regions</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=VII/220A" target="_blank" rel="noopener noreferrer">Barnard (B) <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- dark nebulae</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=VII/21" target="_blank" rel="noopener noreferrer">van den Bergh (vdB) <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- reflection nebulae</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=VII/74A" target="_blank" rel="noopener noreferrer">Abell <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- galaxy clusters &amp; planetary nebulae</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=VII/9" target="_blank" rel="noopener noreferrer">Lynds (LBN) <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- bright nebulae</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=VII/170" target="_blank" rel="noopener noreferrer">Arp <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- peculiar galaxies</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.astroleague.org/herschel-400-observing-program/" target="_blank" rel="noopener noreferrer">Herschel 400 <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- Astronomical League program</span></li>
+                                    <li class="mb-1 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.cloudynights.com/forums/topic/472872-500-best-dso-list" target="_blank" rel="noopener noreferrer">Pensack 500 <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- 500 best DSO for imaging</span></li>
+                                    <li class="mb-0 d-flex align-items-baseline gap-1"><a class="fw-semibold text-decoration-none" href="https://www.garyimm.com/compendium" target="_blank" rel="noopener noreferrer">Gary Imm <i class="bi bi-box-arrow-up-right" style="font-size:.65em" aria-hidden="true"></i></a><span class="text-muted">- astrophotography compendium (~200 objects)</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shadow p-2 mb-3 rounded bg-sub-container">
+                <h2>
                     <i class="bi bi-shield-check text-warning icon-inline" aria-hidden="true"></i>
                     <span data-i18n="about.license_title">License</span>
                 </h2>

@@ -85,7 +85,13 @@
     "license_title": "Licença",
     "license_text": "MyAstroBoard é licenciado sob AGPL-3.0. O código-fonte permanece disponível para versões implantadas.",
     "source_label": "Repositório de código",
-    "issues_label": "Reportar um problema"
+    "issues_label": "Reportar um problema",
+    "credits_title": "Créditos & Agradecimentos",
+    "credits_intro": "MyAstroBoard é construído sobre estes projetos open-source e serviços de dados gratuitos.",
+    "credits_frontend_title": "Frontend",
+    "credits_python_title": "Bibliotecas Python",
+    "credits_apis_title": "Fontes de dados & APIs",
+    "credits_catalogues_title": "Catálogos de objetos"
   },
   "planets": {
     "mercury": "Mercury",
