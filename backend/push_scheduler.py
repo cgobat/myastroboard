@@ -89,7 +89,7 @@ def _send(user: Any, trigger_id: str, title: str, body: str, url: str,
         'body':  body,
         'icon':  icon,
         'badge': badge,
-        'tag':   f'{trigger_id}-{datetime.now(timezone.utc).strftime("%Y%m%d")}',
+        'tag':   trigger_id,
         'data':  {'url': url},
     }
 

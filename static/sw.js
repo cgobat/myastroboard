@@ -119,11 +119,12 @@ self.addEventListener('push', (event) => {
 
     const title   = payload.title  || 'MyAstroBoard';
     const options = {
-        body:  payload.body  || '',
-        icon:  payload.icon  || '/static/ico/android/launchericon-192x192.png',
-        badge: payload.badge || '/static/ico/android/launchericon-72x72.png',
-        tag:   payload.tag   || 'mab-push',
-        data:  payload.data  || {},
+        body:     payload.body  || '',
+        icon:     payload.icon  || '/static/ico/android/launchericon-192x192.png',
+        badge:    payload.badge || '/static/ico/android/launchericon-72x72.png',
+        tag:      payload.tag   || 'mab-push',
+        data:     payload.data  || {},
+        renotify: true,
     };
 
     event.waitUntil(self.registration.showNotification(title, options));
