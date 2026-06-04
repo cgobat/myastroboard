@@ -1840,7 +1840,7 @@
     "offline_support_unavailable": "Le support hors ligne en arrière-plan est indisponible pour le moment.",
     "offline_page_title": "Hors ligne - MyAstroBoard",
     "offline_title": "Vous êtes hors ligne",
-    "offline_message": "MyAstroBoard ne peut pas joindre le serveur pour le moment. Vous pouvez continuer à consulter les pages en cache et réessayer lorsque la connexion revient.",
+    "offline_message": "MyAstroBoard ne peut pas joindre le serveur pour le moment. Veuillez réessayer lorsque la connexion sera rétablie.",
     "retry_connection": "Réessayer la connexion",
     "checking_connection": "Vérification de la connexion...",
     "still_offline": "Toujours hors ligne. Vérifiez votre connexion puis réessayez.",

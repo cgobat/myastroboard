@@ -1,5 +1,5 @@
 (function initializeOfflinePage() {
-    const AUTO_RETRY_INTERVAL_SECONDS = 60;
+    const AUTO_RETRY_INTERVAL_SECONDS = 30;
     let retryCountdownSeconds = AUTO_RETRY_INTERVAL_SECONDS;
     let countdownTimerId = null;
     let reconnectInProgress = false;
@@ -84,11 +84,11 @@
 
             navigateToApp();
         } catch (_) {
-            if (window.navigator && window.navigator.onLine) {
-                navigateToApp();
-                return;
-            }
-
+            // Do NOT fall back to navigator.onLine here. navigator.onLine only
+            // indicates the device has a network interface — it returns true even
+            // when the server is unreachable (e.g. WiFi connected but server down).
+            // Navigating on a failed fetch causes the false-reconnect loop where the
+            // app loads from cache, checkAuthStatus fails, and we're back here.
             messageNode.textContent = t('pwa.still_offline');
             retryButton.disabled = false;
             window.setTimeout(() => {

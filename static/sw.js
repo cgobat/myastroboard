@@ -269,12 +269,31 @@ self.addEventListener('fetch', (event) => {
     if (url.pathname.startsWith('/static/') || url.pathname.match(/^\/manifest(\.[a-z]+)?\.webmanifest$/)) {
         event.respondWith(
             (async () => {
+                // Cache-first: serve the cached response immediately if available, then
+                // refresh in the background. This avoids a 4-second network timeout stall
+                // when the device is offline — critical for the offline page itself, whose
+                // i18n JSON files (pre-cached in APP_SHELL_URLS) would otherwise show blank
+                // text until the timeout elapsed.
+                // Safety: version query strings (?v=x.y.z) mean a changed file gets a new
+                // URL and will miss the cache, forcing a fresh network fetch as expected.
                 const cachedResponse = await caches.match(request);
-                const fallbackCachedResponse = cachedResponse || await caches.match(url.pathname);
+                if (cachedResponse) {
+                    fetchWithTimeout(request, 4000).then((networkResponse) => {
+                        if (!networkResponse || networkResponse.status !== 200) return;
+                        const responseClone = networkResponse.clone();
+                        _shouldCache().then((ok) => {
+                            if (!ok) return;
+                            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, responseClone));
+                        });
+                    }).catch(() => {});
+                    return cachedResponse;
+                }
+
+                // Not in cache — fetch from network, then cache for next time.
                 try {
                     const networkResponse = await fetchWithTimeout(request, 4000);
                     if (networkResponse && networkResponse.status === 200) {
-                        const responseClone = networkResponse.clone(); // clone synchronously before body is consumed
+                        const responseClone = networkResponse.clone();
                         _shouldCache().then((ok) => {
                             if (!ok) return;
                             caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, responseClone));
@@ -282,7 +301,8 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 } catch (_) {
-                    return fallbackCachedResponse || new Response('', {
+                    // Last resort: try matching by path only (ignores query string).
+                    return await caches.match(url.pathname) || new Response('', {
                         status: 503,
                         statusText: 'Offline asset unavailable'
                     });

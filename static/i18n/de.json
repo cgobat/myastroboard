@@ -1840,7 +1840,7 @@
     "offline_support_unavailable": "Offline-Unterstutzung im Hintergrund ist derzeit nicht verfugbar.",
     "offline_page_title": "Offline - MyAstroBoard",
     "offline_title": "Sie sind offline",
-    "offline_message": "MyAstroBoard kann den Server derzeit nicht erreichen. Sie konnen zwischengespeicherte Seiten weiter ansehen und die Verbindung spater erneut versuchen.",
+    "offline_message": "MyAstroBoard kann den Server derzeit nicht erreichen. Bitte erneut versuchen, wenn die Verbindung wiederhergestellt ist.",
     "retry_connection": "Verbindung erneut versuchen",
     "checking_connection": "Verbindung wird gepruft...",
     "still_offline": "Weiterhin offline. Bitte Verbindung prufen und erneut versuchen.",

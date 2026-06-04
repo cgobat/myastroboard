@@ -1840,7 +1840,7 @@
     "offline_support_unavailable": "Il supporto offline in background non è al momento disponibile.",
     "offline_page_title": "Non in linea - MyAstroBoard",
     "offline_title": "Sei offline",
-    "offline_message": "MyAstroBoard non può raggiungere il server in questo momento. Puoi continuare a visualizzare le pagine memorizzate nella cache e riprovare una volta ripristinata la connessione.",
+    "offline_message": "MyAstroBoard non può raggiungere il server in questo momento. Riprova quando la connessione sarà ripristinata.",
     "retry_connection": "Riprovare la connessione",
     "checking_connection": "Verifica della connessione...",
     "still_offline": "Ancora offline. Verifica la tua rete e riprova.",

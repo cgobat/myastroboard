@@ -1840,7 +1840,7 @@
     "offline_support_unavailable": "O suporte off-line em segundo plano não está disponível no momento.",
     "offline_page_title": "Off-line - MyAstroBoard",
     "offline_title": "Você está off-line",
-    "offline_message": "MyAstroBoard não pode acessar o servidor no momento. Você pode continuar visualizando as páginas em cache e tentar novamente quando a conexão for restabelecida.",
+    "offline_message": "MyAstroBoard não pode acessar o servidor no momento. Tente novamente quando a conexão for restabelecida.",
     "retry_connection": "Tentar novamente a conexão",
     "checking_connection": "Verificando conexão...",
     "still_offline": "Ainda off-line. Verifique sua rede e tente novamente.",

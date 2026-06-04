@@ -1840,7 +1840,7 @@
     "offline_support_unavailable": "Background offline support is unavailable right now.",
     "offline_page_title": "Offline - MyAstroBoard",
     "offline_title": "You are offline",
-    "offline_message": "MyAstroBoard cannot reach the server right now. You can keep viewing cached pages and retry once your connection is back.",
+    "offline_message": "MyAstroBoard cannot reach the server right now. Please retry when your connection is back.",
     "retry_connection": "Retry connection",
     "checking_connection": "Checking connection...",
     "still_offline": "Still offline. Please verify your network and try again.",
