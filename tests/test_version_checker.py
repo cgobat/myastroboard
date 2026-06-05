@@ -150,5 +150,5 @@ def test_check_for_updates_request_exception(monkeypatch):
 
     result = module.check_for_updates()
 
-    assert result["error"] == "network down"
+    assert result["error"] == "Request failed"
     assert result["update_available"] is False

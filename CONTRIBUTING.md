@@ -334,6 +334,19 @@ def test_parse_coordinates_invalid_format():
         parse_coordinates("invalid", "coordinates")
 ```
 
+### API Route Changes
+
+`tests/test_route_inventory.py` maintains the v1.0 API contract: it fails if any route is added, removed, renamed, or changes its HTTP method.
+
+**If you add or rename an API route**, update `EXPECTED_ROUTES` in that file to match, and document the change in `CHANGELOG_NEXT.md`.
+
+```bash
+# Quick check after touching app.py or skytonight_api.py
+pytest tests/test_route_inventory.py
+```
+
+The failure output lists exactly which routes are unexpected or missing, so you know precisely what to update.
+
 ### Test Coverage
 
 - Aim for **80%+ code coverage** for new code
