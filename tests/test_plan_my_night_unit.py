@@ -37,6 +37,7 @@ from plan_my_night import (
     reorder_target,
     get_plan_with_timeline,
     serialize_plan_csv,
+    generate_plan_pdf,
 )
 
 
@@ -702,3 +703,95 @@ class TestPlanMutationsAndTimeline:
         )
         assert "M45" in populated_csv
         assert "oui" in populated_csv
+
+
+class _DummyI18n:
+    def t(self, key):
+        return {
+            "plan_my_night.export_pdf_title": "My Observation Plan",
+            "plan_my_night.export_pdf_col_target": "Target",
+            "plan_my_night.export_pdf_col_slot": "Slot",
+            "plan_my_night.export_pdf_col_duration": "Duration",
+            "plan_my_night.export_pdf_col_type": "Type",
+            "plan_my_night.export_pdf_col_constellation": "Constellation",
+            "plan_my_night.export_pdf_section_targets": "Planned targets",
+            "skytonight.altitude_time_title": "Altitude vs Time",
+            "skytonight.altitude_time_y_axis": "Altitude (deg)",
+            "skytonight.altitude_time_x_axis": "Time",
+            "plan_my_night.export_pdf_no_plan": "No plan available.",
+            "common.title_html": "MyAstroBoard",
+        }.get(key)
+
+
+class TestGeneratePlanPdf:
+    def test_generate_plan_pdf_with_no_plan(self):
+        import matplotlib
+
+        matplotlib.use("Agg", force=True)
+
+        payload = {"plan": None}
+        metrics = {"fill_percent": 0.0, "planned_minutes": 0, "night_minutes": 0, "overflow_minutes": 0}
+
+        result = generate_plan_pdf(payload, metrics, _DummyI18n())
+
+        assert result is not None
+        assert hasattr(result, "getvalue")
+        # PDF signature: %PDF
+        assert result.getvalue().startswith(b"%PDF")
+
+    def test_generate_plan_pdf_with_chart_and_overflow_pages(self, tmp_path, monkeypatch):
+        import matplotlib
+
+        matplotlib.use("Agg", force=True)
+
+        monkeypatch.setattr("constants.SKYTONIGHT_OUTPUT_DIR", str(tmp_path), raising=True)
+
+        alttime_payload = {
+            "timezone": "UTC",
+            "times_utc": [
+                "2026-08-12T21:00:00Z",
+                "2026-08-12T21:30:00Z",
+                "2026-08-12T22:00:00Z",
+                "2026-08-12T22:30:00Z",
+                "2026-08-12T23:00:00Z",
+            ],
+            "altitudes": [20.0, 30.0, 45.0, 40.0, 25.0],
+            "altitude_constraint_min": 20,
+            "altitude_constraint_max": 80,
+        }
+
+        with open(tmp_path / "m31_alttime.json", "w", encoding="utf-8") as f:
+            json.dump(alttime_payload, f)
+
+        entries = []
+        for idx in range(12):
+            entries.append(
+                {
+                    "id": f"e{idx}",
+                    "name": f"Target {idx}",
+                    "target_name": f"Target {idx}",
+                    "catalogue": "Messier",
+                    "type": "Galaxy",
+                    "constellation": "Andromeda",
+                    "done": bool(idx % 2),
+                    "planned_duration": "00:30",
+                    "timeline_start": "2026-08-12T21:05:00Z",
+                    "timeline_end": "2026-08-12T22:35:00Z",
+                    "alttime_file": "m31" if idx == 0 else None,
+                }
+            )
+
+        payload = {
+            "plan": {
+                "night_start": "2026-08-12T21:00:00Z",
+                "night_end": "2026-08-12T23:00:00Z",
+                "entries": entries,
+            }
+        }
+        metrics = {"fill_percent": 55.0, "planned_minutes": 180, "night_minutes": 360, "overflow_minutes": 0}
+
+        result = generate_plan_pdf(payload, metrics, _DummyI18n())
+
+        assert result.getvalue().startswith(b"%PDF")
+        # Multiple pages should produce a reasonably large buffer.
+        assert len(result.getvalue()) > 5000

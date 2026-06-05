@@ -213,6 +213,61 @@ class TestConfigEndpoints:
         assert isinstance(data, list)
         assert len(data) > 0
 
+    def test_post_config_preserves_old_horizon_profile_without_clear_flag(self, client_admin, monkeypatch):
+        old_cfg = {
+            'location': {'latitude': 1, 'longitude': 2, 'timezone': 'UTC'},
+            'location_configured': True,
+            'skytonight': {
+                'enabled': True,
+                'constraints': {'horizon_profile': [{'az': 10, 'alt': 20}], 'altitude_constraint_min': 25},
+                'scheduler': {'enabled': True},
+            },
+        }
+        captured = {}
+        monkeypatch.setattr(_app_mod, 'load_config', lambda: old_cfg)
+        monkeypatch.setattr(_app_mod, 'save_config', lambda cfg: captured.setdefault('cfg', cfg))
+        monkeypatch.setattr(_app_mod.cache_store, 'reset_all_caches', lambda: None)
+        monkeypatch.setattr(_app_mod.cache_store, 'update_location_config', lambda *_a, **_k: None)
+
+        incoming = {
+            'location': {'latitude': 1, 'longitude': 2, 'timezone': 'UTC'},
+            'skytonight': {'constraints': {'horizon_profile': []}},
+        }
+        resp = client_admin.post('/api/config', json=incoming)
+
+        assert resp.status_code == 200
+        saved = captured['cfg']
+        assert saved['skytonight']['constraints']['horizon_profile'] == [{'az': 10, 'alt': 20}]
+        assert saved['location_configured'] is True
+
+    def test_post_config_location_change_resets_cache(self, client_admin, monkeypatch):
+        old_cfg = {'location': {'latitude': 1, 'longitude': 2, 'timezone': 'UTC'}, 'skytonight': {'constraints': {}}}
+        reset_calls = []
+        update_calls = []
+        monkeypatch.setattr(_app_mod, 'load_config', lambda: old_cfg)
+        monkeypatch.setattr(_app_mod, 'save_config', lambda *_a, **_k: None)
+        monkeypatch.setattr(_app_mod.cache_store, 'reset_all_caches', lambda: reset_calls.append(1))
+        monkeypatch.setattr(_app_mod.cache_store, 'update_location_config', lambda loc: update_calls.append(loc))
+
+        incoming = {'location': {'latitude': 3, 'longitude': 2, 'timezone': 'UTC'}}
+        resp = client_admin.post('/api/config', json=incoming)
+        data = resp.get_json()
+
+        assert resp.status_code == 200
+        assert data['cache_reset'] is True
+        assert reset_calls == [1]
+        assert len(update_calls) == 1
+
+    def test_post_config_invalid_bortle_returns_400(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_app_mod, 'load_config', lambda: {'location': {}, 'skytonight': {'constraints': {}}})
+        resp = client_admin.post('/api/config', json={'location': {'bortle': 11}})
+        assert resp.status_code == 400
+
+    def test_post_config_invalid_sqm_returns_400(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_app_mod, 'load_config', lambda: {'location': {}, 'skytonight': {'constraints': {}}})
+        resp = client_admin.post('/api/config', json={'location': {'sqm': -1}})
+        assert resp.status_code == 400
+
 
 # ---------------------------------------------------------------------------
 # Admin endpoints
@@ -257,6 +312,11 @@ class TestAdminEndpoints:
         )
         resp = client_admin.get('/api/metrics')
         assert resp.status_code == 200
+
+    def test_get_metrics_returns_500_on_exception(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_app_mod, 'collect_metrics', lambda: (_ for _ in ()).throw(RuntimeError('boom')))
+        resp = client_admin.get('/api/metrics')
+        assert resp.status_code == 500
 
 
 # ---------------------------------------------------------------------------

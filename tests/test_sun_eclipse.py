@@ -75,6 +75,16 @@ class TestCalculateAstrophotographyScore:
         score, classification = self.svc._calculate_astrophotography_score("Partial", True, 15.0, 20.0, 30)
         assert classification in ("moderate", "low", "good")
 
+    def test_classification_moderate_threshold_path(self):
+        score, classification = self.svc._calculate_astrophotography_score("Partial", True, 0.0, 5.0, 0)
+        assert 3.0 <= score < 5.0
+        assert classification == "moderate"
+
+    def test_classification_low_path(self):
+        score, classification = self.svc._calculate_astrophotography_score("Partial", True, 0.0, -60.0, 0)
+        assert score < 3.0
+        assert classification == "low"
+
 
 class TestGetEclipseType:
     """Tests for SolarEclipseService._get_eclipse_type."""
@@ -133,6 +143,192 @@ class TestCoordAttribute:
         coord.alt.to_value = MagicMock(return_value=45.3)
         result = self.svc._coord_attribute(coord, "alt")
         assert result == pytest.approx(45.3)
+
+    def test_falls_back_to_float_conversion(self):
+        coord = MagicMock()
+        coord.az = 123.4
+        result = self.svc._coord_attribute(coord, "az")
+        assert result == pytest.approx(123.4)
+
+    def test_returns_none_on_attribute_or_type_errors(self):
+        coord_attr_error = MagicMock()
+        coord_attr_error.alt = MagicMock()
+        coord_attr_error.alt.to_value = MagicMock(side_effect=AttributeError("bad attr"))
+
+        coord_type_error = MagicMock()
+        coord_type_error.alt = object()
+
+        assert self.svc._coord_attribute(coord_attr_error, "alt") is None
+        assert self.svc._coord_attribute(coord_type_error, "alt") is None
+
+
+class TestSunGeometry:
+    def setup_method(self):
+        self.svc = SolarEclipseService(45.0, -73.5, "UTC")
+
+    @patch("sun_eclipse.get_sun")
+    def test_get_sun_azimuth_returns_transformed_value(self, mock_get_sun):
+        transformed = MagicMock()
+        transformed.az = MagicMock()
+        transformed.az.to_value = MagicMock(return_value=210.2)
+
+        sun = MagicMock()
+        sun.transform_to.return_value = transformed
+        mock_get_sun.return_value = sun
+
+        az = self.svc._get_sun_azimuth(datetime.datetime(2026, 8, 12, 14, 32, tzinfo=datetime.timezone.utc))
+        assert az == pytest.approx(210.2)
+
+    @patch("sun_eclipse.get_sun")
+    def test_get_sun_azimuth_defaults_to_zero_when_missing(self, mock_get_sun):
+        transformed = MagicMock(spec=[])
+        sun = MagicMock()
+        sun.transform_to.return_value = transformed
+        mock_get_sun.return_value = sun
+
+        az = self.svc._get_sun_azimuth(datetime.datetime(2026, 8, 12, 14, 32, tzinfo=datetime.timezone.utc))
+        assert az == 0.0
+
+    @patch("sun_eclipse.get_sun")
+    def test_generate_altitude_vs_time_includes_end_point(self, mock_get_sun):
+        transformed = MagicMock()
+        transformed.alt = MagicMock()
+        transformed.alt.to_value = MagicMock(return_value=30.04)
+        transformed.az = MagicMock()
+        transformed.az.to_value = MagicMock(return_value=110.06)
+
+        sun = MagicMock()
+        sun.transform_to.return_value = transformed
+        mock_get_sun.return_value = sun
+
+        start = datetime.datetime(2026, 8, 12, 13, 0, tzinfo=datetime.timezone.utc)
+        end = datetime.datetime(2026, 8, 12, 13, 10, tzinfo=datetime.timezone.utc)
+        points = self.svc._generate_altitude_vs_time(start, end)
+
+        assert len(points) == 3
+        assert [p.time for p in points] == ["13:00", "13:05", "13:10"]
+        assert points[0].altitude_deg == 30.0
+        assert points[0].azimuth_deg == 110.1
+
+    @patch("sun_eclipse.get_sun")
+    def test_generate_altitude_vs_time_defaults_missing_coords_to_zero(self, mock_get_sun):
+        transformed = MagicMock(spec=[])
+        sun = MagicMock()
+        sun.transform_to.return_value = transformed
+        mock_get_sun.return_value = sun
+
+        start = datetime.datetime(2026, 8, 12, 13, 0, tzinfo=datetime.timezone.utc)
+        end = datetime.datetime(2026, 8, 12, 13, 0, tzinfo=datetime.timezone.utc)
+        points = self.svc._generate_altitude_vs_time(start, end)
+
+        assert len(points) == 1
+        assert points[0].altitude_deg == 0.0
+        assert points[0].azimuth_deg == 0.0
+
+
+class _TimeWrapper:
+    def __init__(self, dt):
+        self._dt = dt
+
+    def Utc(self):
+        return self._dt
+
+
+class _Event:
+    def __init__(self, dt):
+        self.time = _TimeWrapper(dt)
+
+
+class _Peak:
+    def __init__(self, dt, altitude):
+        self.time = _TimeWrapper(dt)
+        self.altitude = altitude
+
+
+class _Eclipse:
+    def __init__(self, *, kind, peak_dt, peak_altitude, start_dt, end_dt, obscuration):
+        self.kind = kind
+        self.peak = _Peak(peak_dt, peak_altitude)
+        self.partial_begin = _Event(start_dt)
+        self.partial_end = _Event(end_dt)
+        self.obscuration = obscuration
+
+
+class TestGetNextEclipse:
+    def setup_method(self):
+        self.svc = SolarEclipseService(45.0, -73.5, "UTC")
+
+    @patch("sun_eclipse.SearchLocalSolarEclipse", return_value=None)
+    def test_returns_none_when_no_eclipse_found(self, _mock_search):
+        assert self.svc.get_next_eclipse() is None
+
+    @patch.object(SolarEclipseService, "_generate_altitude_vs_time")
+    @patch.object(SolarEclipseService, "_get_sun_azimuth")
+    @patch("sun_eclipse.SearchLocalSolarEclipse")
+    def test_get_next_eclipse_total_path(self, mock_search, mock_az, mock_alttime):
+        peak_naive_utc = datetime.datetime(2026, 8, 12, 14, 32, 15)
+        start_naive_utc = datetime.datetime(2026, 8, 12, 13, 5, 0)
+        end_naive_utc = datetime.datetime(2026, 8, 12, 15, 59, 0)
+
+        mock_search.return_value = _Eclipse(
+            kind="EclipseKind.Total",
+            peak_dt=peak_naive_utc,
+            peak_altitude=52.345,
+            start_dt=start_naive_utc,
+            end_dt=end_naive_utc,
+            obscuration=0.98765,
+        )
+        mock_az.return_value = 180.245
+        mock_alttime.return_value = [
+            EclipsePoint(time="13:05", altitude_deg=10.0, azimuth_deg=90.0),
+            EclipsePoint(time="14:35", altitude_deg=52.3, azimuth_deg=180.2),
+        ]
+
+        info = self.svc.get_next_eclipse()
+
+        assert isinstance(info, SolarEclipseInfo)
+        assert info.visible is True
+        assert info.type == "Total"
+        assert info.magnitude == 0.9877
+        assert info.obscuration_percent == 98.8
+        assert info.peak_altitude_deg == 52.34
+        assert info.peak_azimuth_deg == 180.25
+        assert info.duration_minutes == 174
+        assert info.score_classification == "excellent"
+        assert len(info.altitude_vs_time) == 2
+
+    @patch.object(SolarEclipseService, "_generate_altitude_vs_time")
+    @patch.object(SolarEclipseService, "_get_sun_azimuth")
+    @patch("sun_eclipse.SearchLocalSolarEclipse")
+    def test_get_next_eclipse_non_visible_clamps_negative_altitude(
+        self,
+        mock_search,
+        mock_az,
+        mock_alttime,
+    ):
+        peak_naive_utc = datetime.datetime(2026, 8, 12, 14, 32, 15)
+        start_naive_utc = datetime.datetime(2026, 8, 12, 13, 5, 0)
+        end_naive_utc = datetime.datetime(2026, 8, 12, 13, 45, 0)
+
+        mock_search.return_value = _Eclipse(
+            kind="EclipseKind.Annular",
+            peak_dt=peak_naive_utc,
+            peak_altitude=-4.0,
+            start_dt=start_naive_utc,
+            end_dt=end_naive_utc,
+            obscuration=0.42,
+        )
+        mock_az.return_value = 240.0
+        mock_alttime.return_value = [EclipsePoint(time="13:05", altitude_deg=0.0, azimuth_deg=240.0)]
+
+        info = self.svc.get_next_eclipse()
+
+        assert isinstance(info, SolarEclipseInfo)
+        assert info.type == "Annular"
+        assert info.visible is False
+        assert info.peak_altitude_deg == 0.0
+        assert info.astrophotography_score == 0.0
+        assert info.score_classification == "not_visible"
 
 
 class TestEclipseDataclasses:

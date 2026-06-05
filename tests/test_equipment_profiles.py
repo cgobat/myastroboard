@@ -7,6 +7,7 @@ import json
 import tempfile
 from datetime import datetime
 import sys
+import types
 
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
@@ -437,3 +438,294 @@ def test_safe_save_creates_backup(temp_data_dir, test_user_id):
     # Backup should be cleaned up after successful save
     backup_path = file_path + '.backup'
     assert not os.path.exists(backup_path)
+
+
+def test_update_and_delete_camera_mount_filter_accessory_and_combination(temp_data_dir, test_user_id):
+    camera = equipment_profiles.create_camera(
+        test_user_id,
+        {
+            'name': 'Cam A',
+            'manufacturer': 'Maker',
+            'sensor_width_mm': 13.2,
+            'sensor_height_mm': 8.8,
+            'resolution_width_px': 3000,
+            'resolution_height_px': 2000,
+            'pixel_size_um': 3.8,
+            'sensor_type': 'CMOS Color',
+            'min_temperature_c': '',
+            'read_noise_e': '',
+            'quantum_efficiency': '',
+        },
+    )
+    assert camera is not None
+
+    updated_camera = equipment_profiles.update_camera(
+        test_user_id,
+        camera['id'],
+        {
+            'name': 'Cam B',
+            'manufacturer': 'Maker',
+            'sensor_width_mm': 13.2,
+            'sensor_height_mm': 8.8,
+            'resolution_width_px': 3100,
+            'resolution_height_px': 2100,
+            'pixel_size_um': 3.8,
+            'sensor_type': 'CMOS Color',
+            'cooling_supported': True,
+            'is_shared': True,
+        },
+    )
+    assert updated_camera is not None
+    assert updated_camera['name'] == 'Cam B'
+
+    mount = equipment_profiles.create_mount(
+        test_user_id,
+        {
+            'name': 'Mount A',
+            'mount_type': 'Equatorial',
+            'payload_capacity_kg': 12,
+            'tracking_accuracy_arcsec': '',
+            'guiding_supported': True,
+        },
+    )
+    assert mount is not None
+    updated_mount = equipment_profiles.update_mount(
+        test_user_id,
+        mount['id'],
+        {
+            'name': 'Mount B',
+            'mount_type': 'Equatorial',
+            'payload_capacity_kg': 14,
+            'tracking_accuracy_arcsec': 1.2,
+            'guiding_supported': True,
+            'is_shared': True,
+        },
+    )
+    assert updated_mount is not None
+    assert updated_mount['recommended_payload_kg'] == 10.5
+
+    filt = equipment_profiles.create_filter(
+        test_user_id,
+        {
+            'name': 'Filter A',
+            'filter_type': 'Narrowband',
+            'central_wavelength_nm': 656.3,
+            'bandwidth_nm': 7,
+            'is_shared': True,
+        },
+    )
+    assert filt is not None
+    updated_filter = equipment_profiles.update_filter(
+        test_user_id,
+        filt['id'],
+        {
+            'name': 'Filter B',
+            'filter_type': 'Narrowband',
+            'central_wavelength_nm': '',
+            'bandwidth_nm': '',
+            'is_shared': False,
+        },
+    )
+    assert updated_filter is not None
+    assert updated_filter['name'] == 'Filter B'
+
+    accessory = equipment_profiles.create_accessory(
+        test_user_id,
+        {
+            'name': 'Focuser',
+            'manufacturer': 'X',
+            'accessory_type': 'Focuser',
+            'weight_kg': '',
+            'is_shared': True,
+        },
+    )
+    assert accessory is not None
+    updated_accessory = equipment_profiles.update_accessory(
+        test_user_id,
+        accessory['id'],
+        {
+            'name': 'Focuser Pro',
+            'manufacturer': 'X',
+            'accessory_type': 'Focuser',
+            'weight_kg': 0.3,
+            'is_shared': False,
+        },
+    )
+    assert updated_accessory is not None
+    assert updated_accessory['name'] == 'Focuser Pro'
+
+    scope = equipment_profiles.create_telescope(
+        test_user_id,
+        {
+            'name': 'Scope',
+            'telescope_type': 'Refractor',
+            'aperture_mm': 80,
+            'focal_length_mm': 480,
+            'reducer_barlow_factor': 1.0,
+        },
+    )
+    combo = equipment_profiles.create_combination(
+        test_user_id,
+        {
+            'name': 'Combo A',
+            'telescope_id': scope['id'],
+            'camera_id': camera['id'],
+            'mount_id': mount['id'],
+            'filter_ids': [filt['id']],
+            'accessory_ids': [accessory['id']],
+        },
+    )
+    assert combo is not None
+
+    updated_combo = equipment_profiles.update_combination(
+        test_user_id,
+        combo['id'],
+        {
+            'name': 'Combo B',
+            'telescope_id': scope['id'],
+            'camera_id': camera['id'],
+            'mount_id': mount['id'],
+            'filter_ids': [],
+            'accessory_ids': [],
+        },
+    )
+    assert updated_combo is not None
+    assert updated_combo['name'] == 'Combo B'
+
+    assert equipment_profiles.delete_combination(test_user_id, combo['id']) is True
+    assert equipment_profiles.delete_accessory(test_user_id, accessory['id']) is True
+    assert equipment_profiles.delete_filter(test_user_id, filt['id']) is True
+    assert equipment_profiles.delete_mount(test_user_id, mount['id']) is True
+    assert equipment_profiles.delete_camera(test_user_id, camera['id']) is True
+
+
+def test_load_helpers_return_defaults_on_invalid_json(temp_data_dir, test_user_id):
+    pairs = [
+        ('cameras', equipment_profiles.load_user_cameras),
+        ('mounts', equipment_profiles.load_user_mounts),
+        ('filters', equipment_profiles.load_user_filters),
+        ('accessories', equipment_profiles.load_user_accessories),
+        ('combinations', equipment_profiles.load_user_combinations),
+    ]
+    for eq_type, loader in pairs:
+        p = equipment_profiles.get_user_equipment_file(test_user_id, eq_type)
+        with open(p, 'w', encoding='utf-8') as f:
+            f.write('{invalid json')
+        loaded = loader(test_user_id)
+        assert isinstance(loaded, dict)
+        assert isinstance(loaded.get('items', []), list)
+
+
+def test_shared_equipment_and_combination_status(temp_data_dir, monkeypatch):
+    user_a = 'owner-a'
+    user_b = 'viewer-b'
+
+    fake_auth = types.SimpleNamespace(
+        user_manager=types.SimpleNamespace(
+            list_users=lambda: [
+                {'user_id': user_a, 'username': 'alice'},
+                {'user_id': user_b, 'username': 'bob'},
+            ]
+        )
+    )
+    monkeypatch.setitem(sys.modules, 'auth', fake_auth)
+
+    tel_file = equipment_profiles.get_user_equipment_file(user_a, 'telescopes')
+    cam_file = equipment_profiles.get_user_equipment_file(user_a, 'cameras')
+    combo_file = equipment_profiles.get_user_equipment_file(user_a, 'combinations')
+
+    with open(tel_file, 'w', encoding='utf-8') as f:
+        json.dump({'items': [{'id': 't1', 'name': 'Scope', 'is_shared': True}]}, f)
+    with open(cam_file, 'w', encoding='utf-8') as f:
+        json.dump({'items': [{'id': 'c1', 'name': 'Cam', 'is_shared': True}]}, f)
+    with open(combo_file, 'w', encoding='utf-8') as f:
+        json.dump(
+            {
+                'items': [
+                    {
+                        'id': 'combo1',
+                        'name': 'Shared Combo',
+                        'telescope_id': 't1',
+                        'camera_id': 'c1',
+                        'mount_id': None,
+                        'filter_ids': [],
+                        'accessory_ids': [],
+                    }
+                ]
+            },
+            f,
+        )
+
+    shared_tel = equipment_profiles.load_all_shared_equipment('telescopes', exclude_user_id=user_b)
+    assert len(shared_tel) == 1
+    assert shared_tel[0]['owner_username'] == 'alice'
+
+    status_ok = equipment_profiles.compute_combination_share_status(
+        {
+            'telescope_id': 't1',
+            'camera_id': 'c1',
+            'mount_id': None,
+            'filter_ids': [],
+            'accessory_ids': [],
+        },
+        user_a,
+    )
+    assert status_ok['is_shared'] is True
+    assert status_ok['has_broken_share'] is False
+
+    status_broken = equipment_profiles.compute_combination_share_status(
+        {
+            'telescope_id': 'missing',
+            'camera_id': None,
+            'mount_id': None,
+            'filter_ids': [],
+            'accessory_ids': [],
+        },
+        user_b,
+    )
+    assert status_broken['is_shared'] is False
+    assert status_broken['has_broken_share'] is True
+    assert status_broken['broken_items'] == ['missing']
+
+    shared_combos = equipment_profiles.load_all_shared_combinations(exclude_user_id=user_b)
+    assert len(shared_combos) == 1
+    assert shared_combos[0]['owner_username'] == 'alice'
+
+
+def test_safe_save_equipment_returns_false_when_validation_fails(tmp_path):
+    target = tmp_path / 'equipment.json'
+    target.write_text(json.dumps({'items': []}), encoding='utf-8')
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(equipment_profiles, 'validate_equipment_json', lambda _p: (False, 'bad'))
+        ok = equipment_profiles.safe_save_equipment(str(target), {'items': []})
+
+    assert ok is False
+
+
+def test_analyze_combination_handles_missing_specs_and_missing_combination(temp_data_dir, test_user_id):
+    # Missing combination id path
+    assert equipment_profiles.analyze_combination(test_user_id, 'does-not-exist') is None
+
+    telescope = equipment_profiles.create_telescope(
+        test_user_id,
+        {
+            'name': 'Scope Missing Details',
+            'telescope_type': 'Refractor',
+            'aperture_mm': 80,
+            'focal_length_mm': 480,
+            'reducer_barlow_factor': 1.0,
+        },
+    )
+
+    combo = equipment_profiles.create_combination(
+        test_user_id,
+        {
+            'name': 'Partial Combo',
+            'telescope_id': telescope['id'],
+            'camera_id': None,
+        },
+    )
+    analysis = equipment_profiles.analyze_combination(test_user_id, combo['id'])
+    assert analysis is not None
+    assert len(analysis.recommendations) > 0

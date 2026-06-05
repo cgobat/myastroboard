@@ -3,6 +3,7 @@
 import sys
 import time
 import types
+import os
 from datetime import datetime, timezone, timedelta
 from unittest.mock import MagicMock
 
@@ -590,3 +591,187 @@ def test_cleanup_handles_all_dead(monkeypatch):
     )
 
     assert user.push_subscriptions == []
+
+
+# ---------------------------------------------------------------------------
+# Lifecycle / lock / poll loop
+# ---------------------------------------------------------------------------
+
+
+def test_send_does_not_mark_notified_when_all_deliveries_fail(monkeypatch):
+    import push_manager
+    import push_scheduler
+
+    monkeypatch.setattr(push_manager, 'send_push', lambda *a, **kw: False)
+    push_scheduler._send(_make_user(), 'N7', 'Title', 'Body', '/url')
+
+    assert not push_scheduler._was_recently_notified('u1', 'N7', 60)
+
+
+def test_load_cache_returns_none_on_exception(monkeypatch):
+    import push_scheduler
+
+    class _FailingCacheModule:
+        @staticmethod
+        def load_shared_cache_entry(_k):
+            raise RuntimeError('boom')
+
+    monkeypatch.setitem(sys.modules, 'cache_store', _FailingCacheModule)
+    assert push_scheduler._load_cache('any') is None
+
+
+def test_pick_active_plan_prefers_inside_night(monkeypatch):
+    import push_scheduler
+
+    monkeypatch.setitem(
+        sys.modules,
+        'plan_my_night',
+        types.SimpleNamespace(
+            get_all_plan_files=lambda _uid: [
+                '/x/u1_plan_telescope1.json',
+                '/x/u1_plan_my_night.json',
+            ],
+            get_plan_with_timeline=lambda _uid, _u, telescope_id=None: (
+                {'state': 'current', 'timeline': {'is_inside_night': False}, 'plan': {}}
+                if telescope_id == 'telescope1'
+                else {'state': 'current', 'timeline': {'is_inside_night': True}, 'plan': {}}
+            ),
+        ),
+    )
+
+    payload = push_scheduler._pick_active_plan('u1', 'alice')
+    assert payload is not None
+    assert payload.get('timeline', {}).get('is_inside_night') is True
+
+
+def test_pick_active_plan_returns_none_when_import_fails(monkeypatch):
+    import builtins
+    import push_scheduler
+
+    real_import = builtins.__import__
+
+    def _fake_import(name, *args, **kwargs):
+        if name == 'plan_my_night':
+            raise ImportError('missing')
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, '__import__', _fake_import)
+    assert push_scheduler._pick_active_plan('u1', 'alice') is None
+
+
+def test_poll_sets_any_active_night_and_calls_checks(monkeypatch):
+    import push_scheduler
+
+    calls = []
+    monkeypatch.setattr(push_scheduler, '_check_n7_aurora', lambda *a, **k: calls.append('n7'))
+    monkeypatch.setattr(push_scheduler, '_check_n1_plan_start', lambda *a, **k: calls.append('n1'))
+    monkeypatch.setattr(push_scheduler, '_check_n2_next_target', lambda *a, **k: calls.append('n2'))
+    monkeypatch.setattr(push_scheduler, '_check_n6_darkness', lambda *a, **k: calls.append('n6'))
+    monkeypatch.setattr(push_scheduler, '_check_n3_iss', lambda *a, **k: calls.append('n3'))
+    monkeypatch.setattr(push_scheduler, '_check_n4_n5_eclipse', lambda *a, **k: calls.append('n45'))
+    monkeypatch.setattr(push_scheduler, '_load_cache', lambda _k: {})
+    monkeypatch.setattr(
+        push_scheduler,
+        '_pick_active_plan',
+        lambda _uid, _name: {'state': 'current', 'timeline': {'is_inside_night': True}, 'plan': {}},
+    )
+
+    user = _make_user(user_id='u1', username='alice')
+    fake_um = types.SimpleNamespace(users={'u1': user}, _reload_users_if_changed=lambda: None)
+    monkeypatch.setitem(sys.modules, 'auth', types.SimpleNamespace(user_manager=fake_um))
+
+    push_scheduler._poll()
+
+    assert push_scheduler._any_active_night is True
+    assert calls.count('n7') == 1
+    assert calls.count('n45') == 1
+
+
+def test_poll_skips_users_with_notifications_disabled_or_no_subscriptions(monkeypatch):
+    import push_scheduler
+
+    called = []
+    monkeypatch.setattr(push_scheduler, '_check_n7_aurora', lambda *a, **k: called.append(1))
+    monkeypatch.setattr(push_scheduler, '_load_cache', lambda _k: {})
+    monkeypatch.setattr(push_scheduler, '_pick_active_plan', lambda *_a, **_k: None)
+
+    u_disabled = _make_user(user_id='u1', username='disabled')
+    u_disabled.preferences = {'notifications': {'enabled': False, 'triggers': {}}}
+    u_no_sub = _make_user(user_id='u2', username='nosub', subscriptions=[])
+
+    fake_um = types.SimpleNamespace(users={'u1': u_disabled, 'u2': u_no_sub}, _reload_users_if_changed=lambda: None)
+    monkeypatch.setitem(sys.modules, 'auth', types.SimpleNamespace(user_manager=fake_um))
+
+    push_scheduler._poll()
+    assert not called
+
+
+def test_start_does_not_spawn_when_lock_unavailable(monkeypatch):
+    import push_scheduler
+
+    push_scheduler._scheduler_thread = None
+    monkeypatch.setattr(push_scheduler, '_acquire_lock', lambda: False)
+
+    push_scheduler.start()
+    assert push_scheduler._scheduler_thread is None
+
+
+def test_start_spawns_thread_and_stop_sets_event(monkeypatch):
+    import push_scheduler
+
+    release_calls = []
+
+    class _FakeThread:
+        def __init__(self, target=None, name=None, daemon=None):
+            self._alive = False
+            self.target = target
+
+        def start(self):
+            self._alive = True
+
+        def is_alive(self):
+            return self._alive
+
+    push_scheduler._scheduler_thread = None
+    push_scheduler._stop_event.clear()
+    monkeypatch.setattr(push_scheduler, '_acquire_lock', lambda: True)
+    monkeypatch.setattr(push_scheduler.threading, 'Thread', _FakeThread)
+    monkeypatch.setattr(push_scheduler, '_release_lock', lambda: release_calls.append(1))
+
+    push_scheduler.start()
+    assert push_scheduler._scheduler_thread is not None
+    assert push_scheduler._scheduler_thread.is_alive() is True
+
+    push_scheduler.stop()
+    assert push_scheduler._stop_event.is_set() is True
+    assert release_calls == [1]
+
+
+def test_release_lock_handles_unlock_errors(monkeypatch, tmp_path):
+    import push_scheduler
+
+    lock_path = tmp_path / 'lock.tmp'
+    fp = open(lock_path, 'w', encoding='utf-8')
+    push_scheduler._lock_file = fp
+
+    monkeypatch.setattr(push_scheduler.sys, 'platform', 'win32')
+    monkeypatch.setattr(push_scheduler.msvcrt, 'locking', lambda *a, **k: (_ for _ in ()).throw(PermissionError('x')))
+
+    push_scheduler._release_lock()
+    assert push_scheduler._lock_file is None
+
+
+def test_acquire_lock_success_and_failure(monkeypatch, tmp_path):
+    import push_scheduler
+
+    fake_constants = types.SimpleNamespace(DATA_DIR_CACHE=str(tmp_path))
+    monkeypatch.setitem(sys.modules, 'constants', fake_constants)
+    monkeypatch.setattr(push_scheduler.sys, 'platform', 'win32')
+    monkeypatch.setattr(push_scheduler.msvcrt, 'locking', lambda *a, **k: None)
+
+    assert push_scheduler._acquire_lock() is True
+    assert push_scheduler._lock_file is not None
+    push_scheduler._release_lock()
+
+    monkeypatch.setattr(push_scheduler.msvcrt, 'locking', lambda *a, **k: (_ for _ in ()).throw(OSError('busy')))
+    assert push_scheduler._acquire_lock() is False

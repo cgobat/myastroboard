@@ -312,6 +312,125 @@ class TestSkytonightCatalogueLogsExists:
             assert resp.status_code == 401
 
 
+class TestAdditionalSkytonightRouteBranches:
+
+    def test_scheduler_trigger_remote_success(self, client_admin, monkeypatch, tmp_path):
+        trigger_file = tmp_path / 'trigger.flag'
+        monkeypatch.setattr(_skytonight_api_mod, 'get_skytonight_scheduler_for_api', lambda: 'remote_scheduler')
+        monkeypatch.setattr(_skytonight_api_mod, 'get_skytonight_scheduler_trigger_file', lambda: str(trigger_file))
+
+        resp = client_admin.post('/api/skytonight/scheduler/trigger')
+        assert resp.status_code == 200
+        assert trigger_file.exists()
+
+    def test_scheduler_trigger_remote_failure(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, 'get_skytonight_scheduler_for_api', lambda: 'remote_scheduler')
+        monkeypatch.setattr(_skytonight_api_mod, 'get_skytonight_scheduler_trigger_file', lambda: 'Z:/invalid/path/trigger')
+        monkeypatch.setattr(_skytonight_api_mod, 'open', lambda *a, **k: (_ for _ in ()).throw(OSError('nope')), raising=False)
+
+        resp = client_admin.post('/api/skytonight/scheduler/trigger')
+        assert resp.status_code == 500
+
+    def test_scheduler_trigger_not_running(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, 'get_skytonight_scheduler_for_api', lambda: None)
+        resp = client_admin.post('/api/skytonight/scheduler/trigger')
+        assert resp.status_code == 500
+
+    def test_dataset_rebuild_failure_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, '_run_skytonight_refresh', lambda: (_ for _ in ()).throw(RuntimeError('x')))
+        resp = client_admin.post('/api/skytonight/dataset/rebuild')
+        assert resp.status_code == 500
+
+    def test_log_api_internal_error_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, 'ensure_skytonight_directories', lambda *a, **k: None)
+        monkeypatch.setattr(_skytonight_api_mod.os.path, 'isfile', lambda _p: True)
+        monkeypatch.setattr(
+            _skytonight_api_mod,
+            'open',
+            lambda *a, **k: (_ for _ in ()).throw(OSError('read error')),
+            raising=False,
+        )
+
+        resp = client_admin.get('/api/skytonight/log')
+        assert resp.status_code == 500
+
+    def test_reports_api_internal_error(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, '_build_skytonight_reports_payload', lambda *a, **k: (_ for _ in ()).throw(RuntimeError('boom')))
+        resp = client_admin.get('/api/skytonight/reports')
+        assert resp.status_code == 500
+
+    def test_reports_api_user_missing_returns_401(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, 'get_current_user', lambda: None)
+        resp = client_admin.get('/api/skytonight/reports')
+        assert resp.status_code == 401
+
+    def test_reports_catalogue_internal_error(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, '_build_skytonight_reports_payload', lambda *a, **k: (_ for _ in ()).throw(RuntimeError('boom')))
+        resp = client_admin.get('/api/skytonight/reports/Messier')
+        assert resp.status_code == 500
+
+    def test_alttime_invalid_id_returns_400(self, client_admin):
+        resp = client_admin.get('/api/skytonight/alttime/bad!id')
+        assert resp.status_code == 400
+
+    def test_alttime_not_found_returns_404(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod.os.path, 'isfile', lambda _p: False)
+        resp = client_admin.get('/api/skytonight/alttime/valid_id')
+        assert resp.status_code == 404
+
+    def test_alttime_read_error_returns_500(self, client_admin, monkeypatch, tmp_path):
+        alttime_file = tmp_path / 'ok_alttime.json'
+        alttime_file.write_text('{"times": []}', encoding='utf-8')
+        monkeypatch.setattr(_skytonight_api_mod, 'OUTPUT_DIR', str(tmp_path))
+        monkeypatch.setattr(_skytonight_api_mod, '_alttime_json_path', lambda _id: str(alttime_file))
+        monkeypatch.setattr(_skytonight_api_mod, 'open', lambda *a, **k: (_ for _ in ()).throw(OSError('x')), raising=False)
+
+        resp = client_admin.get('/api/skytonight/alttime/ok')
+        assert resp.status_code == 500
+
+    def test_telescope_recommendations_invalid_payload_returns_400(self, client_admin):
+        resp = client_admin.post('/api/skytonight/telescope-recommendations', json=[1, 2, 3])
+        assert resp.status_code == 400
+
+    def test_telescope_recommendations_no_telescopes_returns_empty(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod.equipment_profiles, 'load_user_telescopes', lambda _u: {'items': []})
+        monkeypatch.setattr(_skytonight_api_mod.equipment_profiles, 'load_all_shared_equipment', lambda *_a, **_k: [])
+        resp = client_admin.post('/api/skytonight/telescope-recommendations', json={'target name': 'M31'})
+        assert resp.status_code == 200
+        assert resp.get_json()['has_telescopes'] is False
+
+    def test_skymap_read_error_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod.os.path, 'isfile', lambda _p: True)
+        monkeypatch.setattr(_skytonight_api_mod, 'open', lambda *a, **k: (_ for _ in ()).throw(OSError('x')), raising=False)
+        resp = client_admin.get('/api/skytonight/skymap')
+        assert resp.status_code == 500
+
+    def test_data_bodies_internal_error_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, '_build_bodies_section_payload', lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError('x')))
+        resp = client_admin.get('/api/skytonight/data/bodies')
+        assert resp.status_code == 500
+
+    def test_data_comets_internal_error_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, '_build_comets_section_payload', lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError('x')))
+        resp = client_admin.get('/api/skytonight/data/comets')
+        assert resp.status_code == 500
+
+    def test_data_dso_internal_error_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, '_build_dso_section_payload', lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError('x')))
+        resp = client_admin.get('/api/skytonight/data/dso')
+        assert resp.status_code == 500
+
+    def test_catalogue_logs_exists_internal_error_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, 'ensure_skytonight_directories', lambda: (_ for _ in ()).throw(RuntimeError('x')))
+        resp = client_admin.get('/api/skytonight/logs/Messier/exists')
+        assert resp.status_code == 500
+
+    def test_target_debug_internal_error_returns_500(self, client_admin, monkeypatch):
+        monkeypatch.setattr(_skytonight_api_mod, 'compute_target_debug', lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError('x')))
+        resp = client_admin.get('/api/skytonight/target-debug?name=M31')
+        assert resp.status_code == 500
+
+
 # ---------------------------------------------------------------------------
 # Pure helper functions
 # ---------------------------------------------------------------------------
