@@ -92,12 +92,12 @@ function createAstroChartShell(title, canvasId, legendItems = [], footerText = '
     return col;
 }
 
-function createAstroConditionCard({ title, value, valueClass = 'text-primary', badgeClass, badgeText, note }) {
+function createAstroConditionCard({ title, value, valueClass = '', badgeClass, badgeText, note, qualityClass = '' }) {
     const col = document.createElement('div');
     col.className = 'col mb-3';
 
     const card = document.createElement('div');
-    card.className = 'card h-100';
+    card.className = `card h-100 astro-condition-card${qualityClass ? ' ' + qualityClass : ''}`;
 
     const cardTitle = document.createElement('div');
     cardTitle.className = 'card-body';
@@ -253,35 +253,40 @@ function renderCurrentAstroConditions(conditions) {
             value: `${conditions.seeing_pickering}/10`,
             badgeClass: `astro-quality-text quality-box ${seeingQuality.class}`,
             badgeText: seeingQuality.text,
-            note: i18n.t('astro_weather.pickering_scale')
+            note: i18n.t('astro_weather.pickering_scale'),
+            qualityClass: seeingQuality.class
         }),
         createAstroConditionCard({
             title: `<i class="bi bi-stars text-warning icon-inline" aria-hidden="true"></i>${i18n.t('astro_weather.transparency')}`,
             value: `${conditions.limiting_magnitude}m`,
             badgeClass: `astro-quality-text quality-box ${transparencyQuality.class}`,
             badgeText: transparencyQuality.text,
-            note: i18n.t('astro_weather.limiting_magnitude')
+            note: i18n.t('astro_weather.limiting_magnitude'),
+            qualityClass: transparencyQuality.class
         }),
         createAstroConditionCard({
             title: `<i class="bi bi-clouds icon-inline" aria-hidden="true"></i>${i18n.t('astro_weather.cloud_layers')}`,
             value: `${Math.round(conditions.cloud_discrimination)}%`,
             badgeClass: `astro-quality-text quality-box ${cloudQuality.class}`,
             badgeText: cloudQuality.text,
-            note: i18n.t('astro_weather.discrimination_score')
+            note: i18n.t('astro_weather.discrimination_score'),
+            qualityClass: cloudQuality.class
         }),
         createAstroConditionCard({
             title: `<i class="bi bi-droplet text-primary icon-inline" aria-hidden="true"></i>${i18n.t('astro_weather.dew_risk')}`,
             value: `${Math.round(conditions.dew_point_spread * 10) / 10}${i18n.t('units.temperature_celsius')}`,
             badgeClass: `astro-quality-text dew-box ${dewRiskColor.class}`,
             badgeText: `${dewRiskColor.text}`,
-            note: i18n.t('astro_weather.temperature_spread')
+            note: i18n.t('astro_weather.temperature_spread'),
+            qualityClass: dewRiskColor.class
         }),
         createAstroConditionCard({
             title: `<i class="bi bi-crosshair2 icon-inline" aria-hidden="true"></i>${i18n.t('astro_weather.tracking')}`,
             value: `${conditions.tracking_stability_score}%`,
             badgeClass: `astro-quality-text quality-box ${trackingQuality.class}`,
             badgeText: trackingQuality.text,
-            note: i18n.t('astro_weather.wind_stability')
+            note: i18n.t('astro_weather.wind_stability'),
+            qualityClass: trackingQuality.class
         })
     ];
     cards.forEach(card => container.appendChild(card));

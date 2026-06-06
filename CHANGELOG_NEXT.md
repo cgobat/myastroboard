@@ -1,1 +1,2 @@
 - Notification for aurora with better localization and cooldown.
+- Improve hero cards for astro score

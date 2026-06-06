@@ -89,7 +89,7 @@
 .astro-main-value {
     font-size: 2rem;
     font-weight: var(--font-bold);
-    color: var(--primary-color);
+    color: var(--quality-text, var(--dew-text, var(--primary-color)));
     line-height: 1;
     margin-bottom: 0.5rem;
 }
@@ -102,6 +102,11 @@
     margin-bottom: 0.5rem;
     display: inline-block;
     line-height: 1.2;
+}
+
+.astro-condition-card {
+    border-top: 3px solid var(--quality-border, var(--dew-border, var(--color-border)));
+    transition: border-top-color var(--transition-normal);
 }
 
 /* Trend charts */
