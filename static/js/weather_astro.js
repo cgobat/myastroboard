@@ -99,9 +99,22 @@ function createAstroConditionCard({ title, value, valueClass = '', badgeClass, b
     const card = document.createElement('div');
     card.className = `card h-100 astro-condition-card${qualityClass ? ' ' + qualityClass : ''}`;
 
+    // Build stacked header: icon above, label below
     const cardTitle = document.createElement('div');
-    cardTitle.className = 'card-body';
-    cardTitle.innerHTML = title;
+    cardTitle.className = 'card-body astro-card-header';
+    const titleTemp = document.createElement('div');
+    titleTemp.innerHTML = title;
+    const iconEl = titleTemp.querySelector('i');
+    const labelText = titleTemp.textContent.trim();
+    if (iconEl) {
+        iconEl.classList.remove('icon-inline');
+        iconEl.classList.add('astro-card-icon');
+        cardTitle.appendChild(iconEl);
+    }
+    const labelEl = document.createElement('div');
+    labelEl.className = 'astro-card-label';
+    labelEl.textContent = labelText;
+    cardTitle.appendChild(labelEl);
 
     const body = document.createElement('div');
     body.className = 'card-body text-center';

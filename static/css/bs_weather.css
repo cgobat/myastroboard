@@ -86,12 +86,65 @@
 }
 
 /* Astro weather */
+.astro-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 0 0 auto;
+}
+
+.astro-card-icon {
+    font-size: 1em;
+    flex-shrink: 0;
+}
+
+.astro-card-label {
+    /* inherits card-body font */
+}
+
 .astro-main-value {
     font-size: 2rem;
     font-weight: var(--font-bold);
     color: var(--quality-text, var(--dew-text, var(--primary-color)));
     line-height: 1;
     margin-bottom: 0.5rem;
+}
+
+@media (max-width: 575px) {
+    .astro-card-header {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0.4rem 0.25rem 0.2rem;
+    }
+    .astro-card-icon {
+        font-size: 1.4rem;
+        margin-bottom: 0.15rem;
+    }
+    .astro-card-label {
+        font-size: 0.7rem;
+        font-weight: var(--font-semibold);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    .astro-main-value {
+        font-size: 1.5rem;
+    }
+    .astro-condition-card .card-body {
+        padding-left: 0.4rem;
+        padding-right: 0.4rem;
+    }
+    .astro-quality-text {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.35rem;
+        margin-bottom: 0.3rem;
+    }
+    .astro-condition-card .fw-light {
+        font-size: 0.6rem;
+    }
 }
 
 .astro-quality-text {
