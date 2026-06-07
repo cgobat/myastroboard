@@ -805,7 +805,7 @@ class TestGetLaunchVidurls:
         }
         with patch("spaceflight_tracker._get", return_value=raw):
             result = get_launch_vidurls("bare-yt-id")
-        assert "youtube.com" in result[0]["url"]
+        assert result[0]["url"].startswith("https://youtube.com/")
 
 
 # ---------------------------------------------------------------------------
