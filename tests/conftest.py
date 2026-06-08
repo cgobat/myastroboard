@@ -182,3 +182,58 @@ def sample_coordinates():
         {"dms": "-45d30m0s", "decimal": -45.5},
         {"dms": "0d0m0s", "decimal": 0.0},
     ]
+
+
+# ---------------------------------------------------------------------------
+# Shared Flask test-client fixtures (used by test_app_routes and
+# test_coverage_paths; kept here so both modules can access them without
+# importing from each other).
+# ---------------------------------------------------------------------------
+
+import types as _types
+import uuid as _uuid
+import tempfile as _tmpfile
+
+if 'psutil' not in sys.modules:
+    sys.modules['psutil'] = _types.ModuleType('psutil')
+
+
+@pytest.fixture
+def client():
+    """Unauthenticated Flask test client."""
+    from app import app as _flask_app
+    _flask_app.config['TESTING'] = True
+    with _flask_app.test_client() as c:
+        yield c
+
+
+@pytest.fixture
+def client_admin():
+    """Admin-authenticated Flask test client."""
+    from app import app as _flask_app
+    from auth import user_manager as _um
+    _flask_app.config['TESTING'] = True
+    with _tmpfile.TemporaryDirectory():
+        with _flask_app.test_client() as c:
+            user = _um.get_user_by_username('admin')
+            assert user is not None
+            with c.session_transaction() as sess:
+                sess['user_id'] = user.user_id
+                sess['username'] = user.username
+                sess['role'] = user.role
+            yield c
+
+
+@pytest.fixture
+def client_user():
+    """Regular-user (non-admin) Flask test client."""
+    from app import app as _flask_app
+    _flask_app.config['TESTING'] = True
+    with _tmpfile.TemporaryDirectory():
+        with _flask_app.test_client() as c:
+            temp_id = str(_uuid.uuid4())
+            with c.session_transaction() as sess:
+                sess['user_id'] = temp_id
+                sess['username'] = 'testuser'
+                sess['role'] = 'user'
+            yield c

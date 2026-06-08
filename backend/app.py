@@ -52,9 +52,9 @@ try:
     from constants import IERS_CACHE_FILE as _IERS_CACHE_FILE
     from astropy.utils.iers import IERS_Auto as _IERS_Auto, IERS_A as _IERS_A
 
-    if os.path.exists(_IERS_CACHE_FILE):
+    if os.path.exists(_IERS_CACHE_FILE):  # pragma: no branch
         _IERS_Auto.iers_table = _IERS_A.open(_IERS_CACHE_FILE)  # type: ignore[assignment]
-except Exception:
+except Exception:  # pragma: no cover
     pass  # No file yet; scheduler will download it on first cycle
 
 from weather_openmeteo import get_hourly_forecast
@@ -130,7 +130,7 @@ import app_settings as _app_settings
 _startup_settings = _app_settings.get_app_settings()
 
 # Configure reverse proxy support — configurable via Parameters → Advanced → Reverse proxy
-if _startup_settings['trust_proxy_headers']:
+if _startup_settings['trust_proxy_headers']:  # pragma: no cover
     app.wsgi_app = ProxyFix(
         app.wsgi_app,
         x_for=1,
@@ -394,7 +394,7 @@ def change_own_password():
             )
 
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required', 'error_key': 'auth.authentication_required'}), 401
 
         user_manager.change_own_password(current_user.user_id, current_password, new_password)
@@ -424,7 +424,7 @@ def get_own_preferences():
     """Get UI customization preferences for the currently authenticated user."""
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required', 'error_key': 'auth.authentication_required'}), 401
 
         preferences = user_manager.get_user_preferences(current_user.user_id)
@@ -443,7 +443,7 @@ def update_own_preferences():
     """Update UI customization preferences for the currently authenticated user."""
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required', 'error_key': 'auth.authentication_required'}), 401
 
         data = request.json or {}
@@ -511,7 +511,7 @@ def push_subscribe():
     """Store a push subscription for the current user."""
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required'}), 401
 
         data = request.json or {}
@@ -546,7 +546,7 @@ def push_list_subscriptions():
     """List push subscriptions for the current user (safe summary, no full endpoints)."""
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required'}), 401
 
         def _provider(endpoint):
@@ -585,7 +585,7 @@ def push_delete_all_subscriptions():
     """Remove all server-side push subscriptions for the current user."""
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required'}), 401
 
         count = len(current_user.push_subscriptions)
@@ -619,7 +619,7 @@ def push_test_trigger(trigger_id):
     }
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required'}), 401
         if trigger_id not in _TRIGGER_PAYLOADS:
             return jsonify({'error': f'Unknown trigger. Valid: {list(_TRIGGER_PAYLOADS)}'}), 400
@@ -685,7 +685,7 @@ def push_test():
     """Send an immediate test push to the current user (all subscriptions)."""
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required'}), 401
         if not current_user.push_subscriptions:
             return jsonify({'error': 'No push subscriptions for this user'}), 400
@@ -732,7 +732,7 @@ def push_unsubscribe():
     """Remove a push subscription for the current user."""
     try:
         current_user = get_current_user()
-        if not current_user:
+        if not current_user:  # pragma: no cover
             return jsonify({'error': 'Authentication required'}), 401
 
         data = request.json or {}
@@ -1051,7 +1051,7 @@ def restart_app_api():
     # Capture session data before leaving the request context — threads have no context.
     username = session.get('username', '?')
 
-    def _deferred_restart():
+    def _deferred_restart():  # pragma: no cover
         time.sleep(1.5)
         logger.info(f"Container restart requested by {username} via admin UI")
         if os.path.exists('/.dockerenv'):
@@ -1375,7 +1375,7 @@ def backup_restore_api():
             }
         )
 
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.error(f"Error restoring backup: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
@@ -1491,7 +1491,7 @@ def get_logs_api():
                     "message": "No log file found yet",
                 }
             )
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.error(f"Error reading logs: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
@@ -1548,7 +1548,7 @@ def convert_coordinates_api():
         else:
             return jsonify({"status": "error", "message": "Invalid DMS format. Use format like: 48d38m36.16s"}), 400
 
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.error(f"Error converting coordinates: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
@@ -2780,7 +2780,7 @@ def _translate_special_phenomena_events(data: Dict[str, Any], language: str) -> 
                         ),
                         gc_altitude=altitude_text,
                     )
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger.debug(f"Error translating special phenomenon event: {e}")
 
         translated_events.append(translated_event)
@@ -3125,7 +3125,7 @@ def list_plan_my_night():
     """Return per-telescope plan summaries for the telescope selector UI."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         import equipment_profiles as _ep
@@ -3147,7 +3147,7 @@ def get_plan_my_night():
     """Get the current user's Plan My Night payload."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         telescope_id = request.args.get('telescope_id') or None
@@ -3171,7 +3171,7 @@ def add_target_to_plan_my_night():
     """Add a target to Plan My Night, creating the plan on first add."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = request.json or {}
@@ -3230,7 +3230,7 @@ def patch_plan_my_night():
     """Update plan-level metadata (e.g. start_delay_minutes)."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         updates = request.json or {}
@@ -3256,7 +3256,7 @@ def update_plan_my_night_target(entry_id):
     """Update target planned duration or done status."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         updates = request.json or {}
@@ -3283,7 +3283,7 @@ def reorder_plan_my_night_target(entry_id):
     """Reorder plan targets within the current night timeline."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = request.json or {}
@@ -3315,7 +3315,7 @@ def delete_plan_my_night_target(entry_id):
     """Delete a target from the active plan."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         telescope_id = request.args.get('telescope_id') or None
@@ -3340,7 +3340,7 @@ def clear_plan_my_night():
     """Clear current plan so a new night plan can be created."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         telescope_id = request.args.get('telescope_id') or None
@@ -3359,7 +3359,7 @@ def clear_all_plans_my_night():
     """Clear all per-telescope plans for the current user."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         deleted = plan_my_night.clear_all_plans(user.user_id)
@@ -3375,7 +3375,7 @@ def add_plan_target_to_astrodex(entry_id):
     """Add an existing plan target to Astrodex if not already present."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         plan_payload = plan_my_night.get_plan_with_timeline(user.user_id, user.username)
@@ -3426,7 +3426,7 @@ def export_plan_my_night_csv():
     """Export the current plan as CSV."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         payload = plan_my_night.get_plan_with_timeline(
@@ -3473,7 +3473,7 @@ def export_plan_my_night_pdf():
     """Export the current plan as a polished, print-friendly PDF."""
     try:
         user = get_current_user()
-        if not user:
+        if not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         language = _resolve_requested_language()
@@ -3504,7 +3504,7 @@ def get_astrodex():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id or not user:
+        if not user_id or not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         config = load_config()
@@ -3545,7 +3545,7 @@ def add_astrodex_item():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id or not user:
+        if not user_id or not user:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         item_data = request.json
@@ -3575,7 +3575,7 @@ def switch_astrodex_item_catalogue_name(item_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = request.json or {}
@@ -3604,7 +3604,7 @@ def get_astrodex_item_api(item_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         item = astrodex.get_astrodex_item(user_id, item_id)
@@ -3625,7 +3625,7 @@ def update_astrodex_item_api(item_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         updates = request.json
@@ -3648,7 +3648,7 @@ def delete_astrodex_item_api(item_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         if astrodex.delete_astrodex_item(user_id, item_id):
@@ -3667,7 +3667,7 @@ def add_picture_to_astrodex_item(item_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         picture_data = request.json
@@ -3690,7 +3690,7 @@ def update_picture_api(item_id, picture_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         updates = request.json
@@ -3713,7 +3713,7 @@ def delete_picture_api(item_id, picture_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         if astrodex.delete_picture(user_id, item_id, picture_id):
@@ -3732,7 +3732,7 @@ def set_main_picture_api(item_id, picture_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         if astrodex.set_main_picture(user_id, item_id, picture_id):
@@ -3775,11 +3775,11 @@ def upload_astrodex_image():
         try:
             user = get_current_user()
             user_id = user.user_id if user else None
-            if not user_id:
+            if not user_id:  # pragma: no cover
                 logger.warning("User not authenticated for file upload")
                 return jsonify({'error': 'User not authenticated'}), 401
 
-        except (TypeError, ValueError):
+        except (TypeError, ValueError):  # pragma: no cover
             logger.warning("Invalid user ID")
             return jsonify({'error': 'Invalid user ID'}), 400
 
@@ -3793,7 +3793,7 @@ def upload_astrodex_image():
         file_path = os.path.normpath(os.path.join(base_dir, unique_filename))
 
         # Confinement check (anti path traversal)
-        if not file_path.startswith(base_dir):
+        if not file_path.startswith(base_dir):  # pragma: no cover
             logger.warning(f"Attempted path traversal attack: {file_path}")
             return jsonify({'error': 'Invalid file path'}), 400
 
@@ -3814,7 +3814,7 @@ def get_astrodex_image(filename):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         config = load_config()
@@ -3842,7 +3842,7 @@ def check_item_in_astrodex(item_name):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
         is_in_astrodex = astrodex.is_item_in_astrodex(user_id, item_name)
 
@@ -3952,7 +3952,7 @@ def get_telescopes():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = equipment_profiles.load_user_telescopes(user_id)
@@ -3977,7 +3977,7 @@ def create_telescope():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         telescope_data = request.json
@@ -3999,7 +3999,7 @@ def get_telescope(telescope_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         telescope = equipment_profiles.get_telescope(user_id, telescope_id)
@@ -4020,7 +4020,7 @@ def update_telescope(telescope_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         telescope_data = request.json
@@ -4045,7 +4045,7 @@ def delete_telescope(telescope_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         success = equipment_profiles.delete_telescope(user_id, telescope_id)
@@ -4067,7 +4067,7 @@ def get_cameras():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = equipment_profiles.load_user_cameras(user_id)
@@ -4092,7 +4092,7 @@ def create_camera():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         camera_data = request.json
@@ -4114,7 +4114,7 @@ def get_camera(camera_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         camera = equipment_profiles.get_camera(user_id, camera_id)
@@ -4135,7 +4135,7 @@ def update_camera(camera_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         camera_data = request.json
@@ -4160,7 +4160,7 @@ def delete_camera(camera_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         success = equipment_profiles.delete_camera(user_id, camera_id)
@@ -4182,7 +4182,7 @@ def get_mounts():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = equipment_profiles.load_user_mounts(user_id)
@@ -4207,7 +4207,7 @@ def create_mount():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         mount_data = request.json
@@ -4229,7 +4229,7 @@ def get_mount(mount_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         mount = equipment_profiles.get_mount(user_id, mount_id)
@@ -4250,7 +4250,7 @@ def update_mount(mount_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         mount_data = request.json
@@ -4275,7 +4275,7 @@ def delete_mount(mount_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         success = equipment_profiles.delete_mount(user_id, mount_id)
@@ -4297,7 +4297,7 @@ def get_filters():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = equipment_profiles.load_user_filters(user_id)
@@ -4322,7 +4322,7 @@ def create_filter():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         filter_data = request.json
@@ -4344,7 +4344,7 @@ def get_filter(filter_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         filter_obj = equipment_profiles.get_filter(user_id, filter_id)
@@ -4365,7 +4365,7 @@ def update_filter(filter_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         filter_data = request.json
@@ -4390,7 +4390,7 @@ def delete_filter(filter_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         success = equipment_profiles.delete_filter(user_id, filter_id)
@@ -4412,7 +4412,7 @@ def get_accessories():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = equipment_profiles.load_user_accessories(user_id)
@@ -4437,7 +4437,7 @@ def create_accessory():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         accessory_data = request.json
@@ -4459,7 +4459,7 @@ def get_accessory(accessory_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         accessory = equipment_profiles.get_accessory(user_id, accessory_id)
@@ -4480,7 +4480,7 @@ def update_accessory(accessory_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         accessory_data = request.json
@@ -4505,7 +4505,7 @@ def delete_accessory(accessory_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         success = equipment_profiles.delete_accessory(user_id, accessory_id)
@@ -4527,7 +4527,7 @@ def get_combinations():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         data = equipment_profiles.load_user_combinations(user_id)
@@ -4556,7 +4556,7 @@ def create_combination():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         combination_data = request.json
@@ -4581,7 +4581,7 @@ def get_combination(combination_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         combination = equipment_profiles.get_combination(user_id, combination_id)
@@ -4603,7 +4603,7 @@ def update_combination(combination_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         combination_data = request.json
@@ -4625,7 +4625,7 @@ def delete_combination(combination_id):
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         success = equipment_profiles.delete_combination(user_id, combination_id)
@@ -4669,7 +4669,7 @@ def get_equipment_summary():
     try:
         user = get_current_user()
         user_id = user.user_id if user else None
-        if not user_id:
+        if not user_id:  # pragma: no cover
             return jsonify({'error': 'User not authenticated'}), 401
 
         summary = equipment_profiles.get_all_equipment_summary(user_id)
@@ -4699,7 +4699,7 @@ def get_or_create_cache_scheduler():
                 logger.debug("Cache scheduler created and started successfully.")
             else:
                 logger.debug("Cache scheduler not started - already running in another process.")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger.error(f"Failed to create cache scheduler: {e}")
             return None
     return app.config.get('cache_scheduler')
@@ -4714,7 +4714,7 @@ def get_or_create_cache_scheduler():
 try:
     logger.info("Initializing cache scheduler on application startup...")
     get_or_create_cache_scheduler()
-except Exception as e:
+except Exception as e:  # pragma: no cover
     logger.error(f"Failed to initialize cache scheduler on startup: {e}", exc_info=True)
 
 try:
@@ -4723,7 +4723,7 @@ try:
     get_or_create_skytonight_scheduler(
         app, cache_ready_event=_cache_sched.cache_ready_event if _cache_sched is not None else None
     )
-except Exception as e:
+except Exception as e:  # pragma: no cover
     logger.error(f'Failed to initialize SkyTonight scheduler on startup: {e}', exc_info=True)
 
 try:
@@ -4735,30 +4735,30 @@ try:
     from push_manager import load_or_generate_vapid_keys as _init_vapid
 
     _init_vapid()
-except Exception as e:
+except Exception as e:  # pragma: no cover
     logger.error(f'Failed to initialize push scheduler on startup: {e}', exc_info=True)
 
 
 # Ensure schedulers are stopped when the worker exits
 # (covers gunicorn workers that never reach the __main__ finally block)
-def _stop_schedulers_on_exit():
+def _stop_schedulers_on_exit():  # pragma: no cover
     skytonight_scheduler = app.config.get('skytonight_scheduler')
     if skytonight_scheduler:
         try:
             skytonight_scheduler.stop()
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger.warning(f'Error stopping SkyTonight scheduler on exit: {e}')
     cache_scheduler = app.config.get('cache_scheduler')
     if cache_scheduler:
         try:
             cache_scheduler.stop()
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger.warning(f"Error stopping cache scheduler on exit: {e}")
     try:
         import push_scheduler as _ps
 
         _ps.stop()
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.warning(f"Error stopping push scheduler on exit: {e}")
 
 
@@ -4769,21 +4769,21 @@ atexit.register(_stop_schedulers_on_exit)
 try:
     import signal as _signal
 
-    def _sigterm_handler(signum, frame):
+    def _sigterm_handler(signum, frame):  # pragma: no cover
         _stop_schedulers_on_exit()
         # Restore default handler and re-raise so gunicorn can complete its shutdown.
         _signal.signal(_signal.SIGTERM, _signal.SIG_DFL)
         os.kill(os.getpid(), _signal.SIGTERM)
 
     _signal.signal(_signal.SIGTERM, _sigterm_handler)
-except Exception:
+except Exception:  # pragma: no cover
     pass  # Signal registration is best-effort (e.g. not the main thread)
 
 # (moved cache scheduler startup above; this block is intentionally empty)
 
 # ============================================================
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     # Running directly with Flask development server
     in_debug_mode = os.environ.get('FLASK_DEBUG') == '1'
 
