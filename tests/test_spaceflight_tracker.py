@@ -463,8 +463,10 @@ class TestGet:
     def test_successful_get_returns_json(self):
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"count": 1, "results": []}
-        with patch("requests.get", return_value=mock_resp):
-            result = _get("/launch/upcoming/", params={"limit": 5})
+        with patch("spaceflight_tracker._load_backoff_state", return_value={}):
+            with patch("spaceflight_tracker._save_backoff_state"):
+                with patch("requests.get", return_value=mock_resp):
+                    result = _get("/launch/upcoming/", params={"limit": 5})
         assert result == {"count": 1, "results": []}
 
     def test_backoff_active_returns_none(self):

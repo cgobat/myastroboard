@@ -502,25 +502,6 @@ class TestAggregateAllEvents:
         assert result is not None
 
 
-class TestEventFiltering:
-    """Tests for event filtering and sorting functionality."""
-
-    def test_sort_events_by_days_until(self, aggregator):
-        """Test that events can be sorted by days until event."""
-        # This would depend on aggregate_all_events returning structured data
-        pass
-
-    def test_filter_high_importance_events(self, aggregator):
-        """Test filtering events by importance."""
-        # This would depend on the API returning filterable events
-        pass
-
-    def test_find_next_event(self, aggregator):
-        """Test finding the next upcoming event."""
-        # This would depend on aggregate_all_events returning next_event field
-        pass
-
-
 class TestGetLocalNow:
     """Tests for local time handling."""
 
@@ -528,19 +509,6 @@ class TestGetLocalNow:
         """Test that local_now respects the aggregator's timezone."""
         assert aggregator.local_now is not None
         assert aggregator.local_now.tzinfo == aggregator.timezone
-
-
-class TestDaysUntilEventCalculation:
-    """Tests for days until event calculation."""
-
-    def test_calculate_days_until_future_event(self):
-        """Test calculating days until a future event."""
-        # The aggregator should calculate this correctly
-        # Implementation depends on the actual method used
-
-    def test_calculate_days_until_past_event(self):
-        """Test calculating days until a past event returns negative."""
-        # The aggregator should handle this correctly
 
 
 # ---------------------------------------------------------------------------

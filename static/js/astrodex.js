@@ -760,7 +760,7 @@ async function showAddAstrodexItemModal() {
             </div>
             <div class="col-md-12">
                 <label for="item-notes" class="form-label">${i18n.t('astrodex.form_notes')}</label>
-                <textarea id="item-notes" class="form-control" rows="3"placeholder="${i18n.t('astrodex.form_notes_placeholder')}"></textarea>
+                <textarea id="item-notes" class="form-control" rows="3" placeholder="${i18n.t('astrodex.form_notes_placeholder')}"></textarea>
             </div>
             <div class="text-end">
                 <button type="submit" class="btn btn-primary">${i18n.t('astrodex.form_add_to_astrodex')}</button>
@@ -859,9 +859,9 @@ async function showAddAstrodexItemModal() {
     }
     // --- end catalogue search ---
     
-    document.getElementById('add-astrodex-form').addEventListener('submit', async (e) => {
+    const submitHandler = async (e) => {
         e.preventDefault();
-        
+
         const itemData = {
             name: document.getElementById('item-name').value,
             type: document.getElementById('item-type').value,
@@ -869,34 +869,31 @@ async function showAddAstrodexItemModal() {
             constellation: document.getElementById('item-constellation').value,
             notes: document.getElementById('item-notes').value
         };
-        
+
         const success = await addToAstrodex(itemData);
         if (success) {
             closeModal();
         }
-    });
+    };
+    document.getElementById('add-astrodex-form').addEventListener('submit', submitHandler);
 
     // Show the modal
     const bs_modal = new bootstrap.Modal('#modal_lg_close', {
-        backdrop: 'static', 
+        backdrop: 'static',
         focus: true,
         keyboard: true
-    }); 
+    });
     bs_modal.show();
 
-    // Event listener when modal is closed
-    document.getElementById('modal_lg_close').addEventListener('hidden.bs.modal', () => {
-        // Remove previous event listeners to prevent duplicates
+    // Clean up event listeners when modal is closed to prevent duplicates on reopen
+    const modalCloseHandler = () => {
         const form = document.getElementById('add-astrodex-form');
         if (form) {
-            form.removeEventListener('submit', async (e) => {
-                e.preventDefault();
-            });
+            form.removeEventListener('submit', submitHandler);
         }
-
-        //Remove self listener to prevent duplicates if modal is opened again
-        document.getElementById('modal_lg_close').removeEventListener('hidden.bs.modal', () => {});
-    });
+        document.getElementById('modal_lg_close').removeEventListener('hidden.bs.modal', modalCloseHandler);
+    };
+    document.getElementById('modal_lg_close').addEventListener('hidden.bs.modal', modalCloseHandler);
 }
 
 // ============================================
@@ -1427,7 +1424,6 @@ function showEditPictureModal(itemId, pictureId) {
             <div class="col-md-12">
                 <label for="edit-picture-notes" class="form-label">${i18n.t('astrodex.form_notes')}</label>
                 <textarea id="edit-picture-notes" class="form-control" rows="3">${escapeHtml(picture.notes || '')}</textarea>
-            </div>
             </div>
             <div class="form-actions text-end">
                 <button type="submit" class="btn btn-primary">${i18n.t('astrodex.save_changes')}</button>

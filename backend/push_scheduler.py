@@ -548,8 +548,6 @@ def _poll() -> None:
                     night_start_str = plan.get('night_start')
                     if night_start_str:
                         try:
-                            from datetime import timezone
-
                             ns = datetime.fromisoformat(night_start_str)
                             if ns.tzinfo is None:
                                 ns = ns.replace(tzinfo=timezone.utc)

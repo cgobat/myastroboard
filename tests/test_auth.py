@@ -809,31 +809,27 @@ class TestAuthDecorators:
 
     def test_get_current_user_returns_none_when_no_session(self, flask_app):
         with flask_app.test_request_context('/'):
-            from auth import get_current_user
-            user = get_current_user()
+            user = auth.get_current_user()
             assert user is None
 
     def test_get_current_user_returns_user_when_session_set(self, flask_app):
         with flask_app.test_request_context('/'):
             from flask import session
-            from auth import get_current_user
             session['username'] = auth.DEFAULT_ADMIN_USERNAME
-            user = get_current_user()
+            user = auth.get_current_user()
             assert user is not None
             assert user.username == auth.DEFAULT_ADMIN_USERNAME
 
     def test_is_user_admin_true(self, flask_app):
         with flask_app.test_request_context('/'):
             from flask import session
-            from auth import is_user_admin
             session['username'] = auth.DEFAULT_ADMIN_USERNAME
-            assert is_user_admin() is True
+            assert auth.is_user_admin() is True
 
     def test_is_user_admin_false_no_session(self, flask_app):
         with flask_app.test_request_context('/'):
-            from auth import is_user_admin
             # is_user_admin returns None (falsy) when no session; `and` short-circuits
-            assert not is_user_admin()
+            assert not auth.is_user_admin()
 
 
 # ===========================================================================
@@ -1098,14 +1094,13 @@ class TestUserRequiredDecorator:
     def test_user_required_blocks_unauthenticated(self, isolated_user_manager):
         """Test decorator logic by calling the inner decorated_function directly."""
         from flask import Flask
-        from auth import user_required
 
         mini_app = Flask(__name__ + '_user_req')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/protected')
-        @user_required
+        @auth.user_required
         def protected():
             from flask import jsonify
             return jsonify({'ok': True})
@@ -1116,14 +1111,13 @@ class TestUserRequiredDecorator:
 
     def test_user_required_blocks_read_only_user(self, isolated_user_manager):
         from flask import Flask
-        from auth import user_required
 
         mini_app = Flask(__name__ + '_user_req_ro')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/protected')
-        @user_required
+        @auth.user_required
         def protected():
             from flask import jsonify
             return jsonify({'ok': True})
@@ -1137,14 +1131,13 @@ class TestUserRequiredDecorator:
 
     def test_user_required_blocks_unknown_user_in_session(self, isolated_user_manager):
         from flask import Flask
-        from auth import user_required
 
         mini_app = Flask(__name__ + '_user_req_ghost')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/protected')
-        @user_required
+        @auth.user_required
         def protected():
             from flask import jsonify
             return jsonify({'ok': True})
@@ -1157,14 +1150,13 @@ class TestUserRequiredDecorator:
 
     def test_user_required_allows_regular_user(self, isolated_user_manager):
         from flask import Flask
-        from auth import user_required
 
         mini_app = Flask(__name__ + '_user_req_regular')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/protected')
-        @user_required
+        @auth.user_required
         def protected():
             from flask import jsonify
             return jsonify({'ok': True})
@@ -1178,14 +1170,13 @@ class TestUserRequiredDecorator:
 
     def test_user_required_allows_admin(self, isolated_user_manager):
         from flask import Flask
-        from auth import user_required
 
         mini_app = Flask(__name__ + '_user_req_admin')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/protected')
-        @user_required
+        @auth.user_required
         def protected():
             from flask import jsonify
             return jsonify({'ok': True})
@@ -1243,14 +1234,13 @@ class TestLoginRequiredDecoratorPassThrough:
 
     def test_login_required_passes_through_authenticated(self, isolated_user_manager):
         from flask import Flask
-        from auth import login_required
 
         mini_app = Flask(__name__ + '_login_req')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/guarded')
-        @login_required
+        @auth.login_required
         def guarded():
             from flask import jsonify
             return jsonify({'reached': True})
@@ -1268,14 +1258,13 @@ class TestAdminRequiredDecoratorUnauthenticated:
 
     def test_admin_required_blocks_no_session(self, isolated_user_manager):
         from flask import Flask
-        from auth import admin_required
 
         mini_app = Flask(__name__ + '_admin_req')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/admin-only', methods=['POST'])
-        @admin_required
+        @auth.admin_required
         def admin_only():
             from flask import jsonify
             return jsonify({'ok': True})
@@ -1286,14 +1275,13 @@ class TestAdminRequiredDecoratorUnauthenticated:
 
     def test_admin_required_blocks_regular_user(self, isolated_user_manager):
         from flask import Flask
-        from auth import admin_required
 
         mini_app = Flask(__name__ + '_admin_req_block')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/admin-only', methods=['POST'])
-        @admin_required
+        @auth.admin_required
         def admin_only():
             from flask import jsonify
             return jsonify({'ok': True})
@@ -1307,14 +1295,13 @@ class TestAdminRequiredDecoratorUnauthenticated:
 
     def test_admin_required_allows_admin(self, isolated_user_manager):
         from flask import Flask
-        from auth import admin_required
 
         mini_app = Flask(__name__ + '_admin_req_allow')
         mini_app.config['TESTING'] = True
         mini_app.config['SECRET_KEY'] = 'test-secret'
 
         @mini_app.route('/admin-only', methods=['POST'])
-        @admin_required
+        @auth.admin_required
         def admin_only():
             from flask import jsonify
             return jsonify({'ok': True})
