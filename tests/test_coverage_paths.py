@@ -323,20 +323,27 @@ class TestPushExceptionPaths:
         """Covers lines 538-540 – exception in push subscribe save."""
         from auth import user_manager as _um
 
+        user = _um.get_user_by_username('admin')
+        original_subs = list(user.push_subscriptions)
+        user.push_subscriptions = []
+
         def raise_error():
             raise RuntimeError('disk full')
 
         monkeypatch.setattr(_um, 'save_users', raise_error)
-        resp = client_admin.post(
-            '/api/push/subscribe',
-            json={
-                'subscription': {
-                    'endpoint': 'https://exception-test.example.com/push/unique-ep',
-                    'keys': {'p256dh': 'abc', 'auth': 'def'},
-                }
-            },
-        )
-        assert resp.status_code == 500
+        try:
+            resp = client_admin.post(
+                '/api/push/subscribe',
+                json={
+                    'subscription': {
+                        'endpoint': 'https://exception-test.example.com/push/unique-ep',
+                        'keys': {'p256dh': 'abc', 'auth': 'def'},
+                    }
+                },
+            )
+            assert resp.status_code == 500
+        finally:
+            user.push_subscriptions = original_subs
 
     def test_push_list_exception(self, client_admin, monkeypatch):
         """Covers lines 577-579 – exception iterating subscriptions list."""
