@@ -3,15 +3,19 @@ Unit tests for weather utilities (weather_utils.py)
 """
 from unittest.mock import Mock, patch
 
+import weather_utils
 from weather_utils import create_weather_client, create_fresh_weather_client
 
 RETRY_COUNT = 2
 BACKOFF_FACTOR = 0.5
+CACHE_EXPIRE_AFTER = 3600
 
 
 class TestWeatherClientCreation:
     """Test weather client creation"""
-    
+    RETRY_COUNT = 2
+    BACKOFF_FACTOR = 0.5
+
     @patch('weather_utils.openmeteo_requests.Client')
     @patch('weather_utils.retry')
     @patch('weather_utils.requests_cache.CachedSession')
@@ -24,13 +28,20 @@ class TestWeatherClientCreation:
         mock_retry.return_value = mock_retry_session
         mock_client_instance = Mock()
         mock_client.return_value = mock_client_instance
-        
+
         # Call the function
         result = create_weather_client()
-        
-        # Verify the client was created
+
+        # Verify full client creation flow and returned client
+        mock_cached_session.assert_called_once()
+        mock_retry.assert_called_once_with(
+            mock_session,
+            retries=self.RETRY_COUNT,
+            backoff_factor=self.BACKOFF_FACTOR
+        )
+        mock_client.assert_called_once_with(session=mock_retry_session)
         assert result == mock_client_instance
-    
+
     @patch('weather_utils.openmeteo_requests.Client')
     @patch('weather_utils.retry')
     @patch('weather_utils.requests_cache.CachedSession')
@@ -40,16 +51,18 @@ class TestWeatherClientCreation:
         mock_cached_session.return_value = mock_session
         mock_retry_session = Mock()
         mock_retry.return_value = mock_retry_session
-        
+
         create_weather_client()
-        
+
         # Verify cache session was created with correct TTL
         mock_cached_session.assert_called_once()
         call_args = mock_cached_session.call_args
-        assert call_args[0][0].endswith(".weather_cache")  # Cache filename
+        expected_cache_filename = getattr(weather_utils, "CACHE_FILENAME", ".weather_cache")
+        assert call_args[0][0].endswith(expected_cache_filename)  # Cache filename
         # Check expire_after parameter
         assert 'expire_after' in call_args[1]
-    
+        assert call_args[1]['expire_after'] == CACHE_EXPIRE_AFTER
+
     @patch('weather_utils.openmeteo_requests.Client')
     @patch('weather_utils.retry')
     @patch('weather_utils.requests_cache.CachedSession')
@@ -59,17 +72,17 @@ class TestWeatherClientCreation:
         mock_cached_session.return_value = mock_session
         mock_retry_session = Mock()
         mock_retry.return_value = mock_retry_session
-        
+
         create_weather_client()
-        
+
         # Verify retry was configured
         mock_retry.assert_called_once()
         call_args = mock_retry.call_args
         assert call_args[0][0] == mock_session
         # Check retry parameters
-        assert 'retries' in call_args[1]
-        assert 'backoff_factor' in call_args[1]
-    
+        assert call_args[1]['retries'] == RETRY_COUNT
+        assert call_args[1]['backoff_factor'] == BACKOFF_FACTOR
+
     @patch('weather_utils.openmeteo_requests.Client')
     @patch('weather_utils.retry')
     @patch('weather_utils.requests_cache.CachedSession')
@@ -81,15 +94,15 @@ class TestWeatherClientCreation:
         mock_retry.return_value = mock_retry_session
         mock_client_instance = Mock()
         mock_client.return_value = mock_client_instance
-        
+
         result = create_weather_client()
-        
+
         # Verify the chain: cache session -> retry session -> client
         mock_cached_session.assert_called_once()
         mock_retry.assert_called_once_with(
             mock_session,
-            retries=RETRY_COUNT,
-            backoff_factor=BACKOFF_FACTOR
+            retries=self.RETRY_COUNT,
+            backoff_factor=self.BACKOFF_FACTOR
         )
         mock_client.assert_called_once_with(session=mock_retry_session)
         assert result == mock_client_instance
