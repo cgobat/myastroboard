@@ -1442,3 +1442,47 @@ class TestRunLoopCacheReadyTimeoutAndAlreadyWaited:
         run_event.wait(timeout=5)
         sched.stop()
         assert len(run_calls) >= 1
+
+
+class TestWaitForInitialCacheReady:
+    """Unit tests for the extracted _wait_for_initial_cache_ready helper."""
+
+    def _make_scheduler(self, monkeypatch, cache_ready_event=None):
+        monkeypatch.setattr('skytonight_scheduler.load_scheduler_status', lambda default=None: {})
+        monkeypatch.setattr('skytonight_scheduler.ensure_skytonight_directories', lambda: None)
+        monkeypatch.setattr('skytonight_scheduler.load_calculation_results', lambda: {})
+        return SkyTonightScheduler(
+            config_loader=lambda: {},
+            runner=lambda: {},
+            cache_ready_event=cache_ready_event,
+        )
+
+    def test_no_event_returns_immediately(self, monkeypatch):
+        sched = self._make_scheduler(monkeypatch, cache_ready_event=None)
+        sched._wait_for_initial_cache_ready()  # must not block or raise
+
+    def test_event_already_set_no_warning(self, monkeypatch):
+        event = threading.Event()
+        event.set()
+        sched = self._make_scheduler(monkeypatch, cache_ready_event=event)
+        with patch('skytonight_scheduler.logger') as mock_log:
+            sched._wait_for_initial_cache_ready()
+            mock_log.warning.assert_not_called()
+
+    def test_timeout_logs_warning(self, monkeypatch):
+        event = threading.Event()  # never set → will time out
+        sched = self._make_scheduler(monkeypatch, cache_ready_event=event)
+        with patch('skytonight_scheduler.SKYTONIGHT_CACHE_READY_TIMEOUT_SECONDS', 0):
+            with patch('skytonight_scheduler.logger') as mock_log:
+                sched._wait_for_initial_cache_ready()
+                mock_log.warning.assert_called_once_with(
+                    'Cache ready timeout exceeded; proceeding with SkyTonight run anyway.'
+                )
+
+    def test_event_set_before_call_no_warning(self, monkeypatch):
+        event = threading.Event()
+        event.set()
+        sched = self._make_scheduler(monkeypatch, cache_ready_event=event)
+        with patch('skytonight_scheduler.logger') as mock_log:
+            sched._wait_for_initial_cache_ready()
+            mock_log.warning.assert_not_called()

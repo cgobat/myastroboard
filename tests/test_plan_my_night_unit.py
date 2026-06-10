@@ -272,7 +272,14 @@ class TestEntryMatches:
 
     def test_entry_matches_by_name(self):
         """Test matching by normalized name."""
-        # Matching is based on normalized names
+        entry = {
+            "name": "M31",
+            "catalogue_group_id": "different-group",
+            "catalogue_aliases": {}
+        }
+        with patch("plan_my_night._target_group_id", return_value=None):
+            result = _entry_matches(entry, "Messier", "m 31")
+            assert result is True
 
 
 class TestParseHHMM:
@@ -304,7 +311,7 @@ class TestParseHHMM:
     def test_parse_negative_hours(self):
         """Test parsing negative hours."""
         result = _parse_hhmm_to_minutes("-01:30")
-        assert result is None or result == 0  # Depends on implementation
+        assert result is None
 
     def test_parse_out_of_range_minutes(self):
         """Test parsing with out-of-range minutes."""
@@ -314,7 +321,7 @@ class TestParseHHMM:
     def test_parse_whitespace(self):
         """Test parsing with whitespace."""
         result = _parse_hhmm_to_minutes("  01:30  ")
-        assert result == 90 or result is None
+        assert result == 90
 
 
 class TestMinutesToHHMM:
@@ -525,7 +532,7 @@ class TestIsTargetInEntries:
         ]
         
         result = is_target_in_entries(entries, "Messier", "M31")
-        assert result is False or result is True  # Depends on implementation
+        assert result is False
 
 
 class TestConcurrency:

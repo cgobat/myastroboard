@@ -991,8 +991,7 @@ def generate_plan_pdf(payload: Dict, metrics: Dict, i18n_manager) -> io.BytesIO:
     _safe_re = _re.compile(r'[^a-z0-9_-]')
 
     def _load_alttime(alttime_file: str):
-        if not alttime_file:  # pragma: no cover  # caller guards with `if af:`
-            return None
+        assert alttime_file, 'alttime_file must be provided'
         safe = _safe_re.sub('_', str(alttime_file).lower())
         path = os.path.normpath(os.path.join(SKYTONIGHT_OUTPUT_DIR, f'{safe}_alttime.json'))
         if not os.path.isfile(path):
@@ -1048,7 +1047,10 @@ def generate_plan_pdf(payload: Dict, metrics: Dict, i18n_manager) -> io.BytesIO:
 
         def _lerp(p0, p1, x):
             span = (p1[0] - p0[0]).total_seconds()
-            assert span > 0, 'Invariant violated: interpolation points must be strictly increasing in time'
+            assert span > 0, (
+                f'Invariant violated: interpolation points must be strictly increasing in time; '
+                f'p0={p0[0]!r}, p1={p1[0]!r}, span_seconds={span!r}'
+            )
             frac = (x - p0[0]).total_seconds() / span
             return x, p0[1] + frac * (p1[1] - p0[1])
 

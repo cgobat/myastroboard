@@ -217,13 +217,8 @@ def _surface_brightness(magnitude: Optional[float], size_arcmin: Optional[float]
     """Approximate surface brightness from integrated magnitude and angular size."""
     if magnitude is None or size_arcmin is None or size_arcmin <= 0:
         return None
-    try:
-        surface_area = math.pi * ((size_arcmin / 2.0) ** 2)
-        if surface_area <= 0:  # pragma: no cover  # size_arcmin > 0 guard above
-            return None
-        return magnitude + 2.5 * math.log10(surface_area)
-    except (ValueError, ZeroDivisionError):  # pragma: no cover  # unreachable given size > 0
-        return None
+    surface_area = math.pi * ((size_arcmin / 2.0) ** 2)
+    return magnitude + 2.5 * math.log10(surface_area)
 
 
 # ---------------------------------------------------------------------------

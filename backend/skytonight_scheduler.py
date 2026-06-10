@@ -25,6 +25,7 @@ from sun_phases import SunService
 logger = get_logger(__name__)
 
 SKYTONIGHT_FALLBACK_INTERVAL_SECONDS = 6 * 60 * 60
+SKYTONIGHT_CACHE_READY_TIMEOUT_SECONDS = 300
 SKYTONIGHT_PRE_NIGHT_OFFSET = timedelta(hours=1)
 SKYTONIGHT_POST_NIGHT_OFFSET = timedelta(hours=1)
 
@@ -346,10 +347,7 @@ class SkyTonightScheduler:
                     and not self._cache_ready_event.is_set()
                 ):
                     self._cache_ready_waited = True
-                    logger.info('Waiting up to 5 minutes for initial cache update ' 'before first SkyTonight run...')
-                    ready = self._cache_ready_event.wait(timeout=300)
-                    if not ready:  # pragma: no cover  # race-condition path: event set between is_set() check and wait()
-                        logger.warning('Cache ready timeout exceeded; proceeding with SkyTonight run anyway.')
+                    self._wait_for_initial_cache_ready()
                 self._cache_ready_waited = True
                 # Set is_executing optimistically before the thread lands so the
                 # status file never shows is_executing=False during pending start.
@@ -371,6 +369,14 @@ class SkyTonightScheduler:
             # stays live in the status file while execution is running.
             self._write_status(schedule=schedule)
             time.sleep(5)
+
+    def _wait_for_initial_cache_ready(self) -> None:
+        if self._cache_ready_event is None:
+            return
+        logger.info('Waiting up to 5 minutes for initial cache update before first SkyTonight run...')
+        ready = self._cache_ready_event.wait(timeout=SKYTONIGHT_CACHE_READY_TIMEOUT_SECONDS)
+        if not ready:
+            logger.warning('Cache ready timeout exceeded; proceeding with SkyTonight run anyway.')
 
     def _execute_cycle(self, manual_trigger: bool = False):
         config = self.config_loader()

@@ -193,18 +193,14 @@ class TestWeatherAstroBranches:
     def test_fresh_ts_but_no_cached_data_falls_through(self):
         """Branch 814->820: TTL not expired but cached data is None → fall through."""
         key = self.weather_astro._analysis_cache_key(24, "nocache_lang")
-        # Fresh timestamp so TTL check passes
-        self.weather_astro._ASTRO_ANALYSIS_LAST_SUCCESS_TS[key] = time.time()
-        # But no cached data for this key
-        self.weather_astro._ASTRO_ANALYSIS_LAST_SUCCESS.pop(key, None)
-
-        try:
-            with patch("weather_astro.is_openmeteo_rate_limited", return_value=True):
-                result = self.weather_astro.get_astro_weather_analysis(24, "nocache_lang")
-            # rate limited + no cache → None
-            assert result is None
-        finally:
-            self.weather_astro._ASTRO_ANALYSIS_LAST_SUCCESS_TS.pop(key, None)
+        now = time.time()
+        with patch("weather_astro.time.time", return_value=now), \
+             patch("weather_astro.is_openmeteo_rate_limited", return_value=True), \
+             patch("weather_astro._ASTRO_ANALYSIS_LAST_SUCCESS_TS", {key: now}), \
+             patch("weather_astro._ASTRO_ANALYSIS_LAST_SUCCESS", {}):
+            result = self.weather_astro.get_astro_weather_analysis(24, "nocache_lang")
+        # rate limited + no cache → None
+        assert result is None
 
 
 # ---------------------------------------------------------------------------
@@ -561,7 +557,7 @@ class TestSpaceflightTrackerBackoffHelpers:
     """Cover _load_backoff_state and _save_backoff_state edge cases."""
 
     def test_load_backoff_file_not_exists_returns_empty(self, tmp_path, monkeypatch):
-        """Line 75: backoff file doesn't exist → return {}."""
+        """_load_backoff_state returns {} when the backoff file does not exist."""
         nonexistent = str(tmp_path / "no_backoff.json")
         monkeypatch.setattr(spaceflight_tracker, "_SPACEFLIGHT_BACKOFF_FILE", nonexistent)
 
