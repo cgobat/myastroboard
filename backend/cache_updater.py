@@ -1031,10 +1031,14 @@ def update_iers_cache():
         else:
             raise RuntimeError(f"All IERS download URLs failed: {last_error}")
 
-        from astropy.utils.iers import IERS_A
+        from astropy.utils.iers import IERS_A, earth_orientation_table
 
         table = IERS_A.open(IERS_CACHE_FILE)
         IERS_Auto.iers_table = table  # type: ignore[assignment]  # atomic swap — never passes through None
+        # IERS_Auto.open() with auto_download=False always overwrites iers_table with the
+        # bundled (old) table, bypassing our downloaded one. Setting earth_orientation_table
+        # directly ensures coordinate transforms (get_polar_motion) use the fresh data.
+        earth_orientation_table.set(table)
 
         mjd_max = table['MJD'].max()  # type: ignore[union-attr]
         if hasattr(mjd_max, 'value'):  # pragma: no branch

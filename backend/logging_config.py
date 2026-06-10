@@ -3,7 +3,6 @@ Centralized logging configuration for MyAstroBoard backend
 Provides consistent logging setup across all modules with configurable log levels
 """
 
-import json
 import logging
 import os
 import sys
@@ -20,11 +19,12 @@ LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
 
 
 class _ConfiguredTzFormatter(logging.Formatter):
-    """Formatter that timestamps log records using the configured observation timezone.
+    """Formatter that timestamps log records using the TZ environment variable.
 
-    The timezone is resolved lazily from DATA_DIR/config.json on the first log record
-    and cached for the lifetime of the process. Falls back to UTC if the config is
-    unavailable (e.g. before the data directory is initialised).
+    The timezone is resolved lazily on the first log record and cached for the
+    lifetime of the process. Falls back to UTC if TZ is unset or invalid.
+    The UTC offset is always appended to the timestamp so records are
+    unambiguous without cross-referencing the container configuration.
     """
 
     _tz = None
@@ -38,11 +38,7 @@ class _ConfiguredTzFormatter(logging.Formatter):
         try:
             from zoneinfo import ZoneInfo
 
-            data_dir = os.environ.get('DATA_DIR', '/app/data')
-            config_path = os.path.join(data_dir, 'config.json')
-            with open(config_path, 'r', encoding='utf-8') as fh:
-                cfg = json.load(fh)
-            tz_name = cfg.get('location', {}).get('timezone', 'UTC')
+            tz_name = os.environ.get('TZ', 'UTC')
             cls._tz = ZoneInfo(tz_name)
         except Exception:
             cls._tz = _tz.utc
@@ -52,7 +48,7 @@ class _ConfiguredTzFormatter(logging.Formatter):
         dt = datetime.fromtimestamp(record.created, tz=self._get_tz())
         if datefmt:
             return dt.strftime(datefmt)
-        return dt.strftime('%Y-%m-%d %H:%M:%S') + f',{int(record.msecs):03d}'
+        return dt.strftime('%Y-%m-%d %H:%M:%S') + f',{int(record.msecs):03d}' + dt.strftime(' %z')
 
 
 def _get_log_level():

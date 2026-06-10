@@ -50,10 +50,15 @@ _iers.conf.auto_max_age = None
 # known path so all Gunicorn workers benefit without any network call at startup.
 try:
     from constants import IERS_CACHE_FILE as _IERS_CACHE_FILE
-    from astropy.utils.iers import IERS_Auto as _IERS_Auto, IERS_A as _IERS_A
+    from astropy.utils.iers import IERS_Auto as _IERS_Auto, IERS_A as _IERS_A, earth_orientation_table as _eot
 
     if os.path.exists(_IERS_CACHE_FILE):  # pragma: no branch
-        _IERS_Auto.iers_table = _IERS_A.open(_IERS_CACHE_FILE)  # type: ignore[assignment]
+        _table = _IERS_A.open(_IERS_CACHE_FILE)
+        _IERS_Auto.iers_table = _table  # type: ignore[assignment]
+        # IERS_Auto.open() with auto_download=False always overwrites iers_table with the
+        # bundled (old) table, bypassing our downloaded one. Setting earth_orientation_table
+        # directly ensures coordinate transforms (get_polar_motion) use the fresh data.
+        _eot.set(_table)
 except Exception:  # pragma: no cover
     pass  # No file yet; scheduler will download it on first cycle
 
