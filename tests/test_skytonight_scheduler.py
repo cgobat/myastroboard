@@ -2,7 +2,9 @@
 
 import os
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timedelta
+from types import SimpleNamespace as NS
 from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
 
@@ -277,7 +279,7 @@ class TestResolveScheduleEdgeCases:
 
     def test_fallback_when_config_is_not_dict(self):
         """Covers non-dict config path."""
-        schedule = resolve_schedule(None, now=datetime(2026, 4, 17, 12, 0, tzinfo=ZoneInfo('UTC')))  # type: ignore[arg-type]
+        schedule = resolve_schedule(None, now=datetime(2026, 4, 17, 12, 0, tzinfo=ZoneInfo('UTC')))  # type: ignore[arg-type]  # Intentionally pass invalid config to verify fallback behavior.
         assert schedule.mode == 'fallback-6h'
 
     def test_now_is_none_uses_current_time(self):
@@ -300,8 +302,6 @@ class TestResolveScheduleEdgeCases:
             'skytonight': {'enabled': True},
         }
         now = datetime(2026, 4, 17, 12, 0, tzinfo=ZoneInfo('Europe/Paris'))
-
-        from types import SimpleNamespace as NS
 
         class FakeSunService:
             def __init__(self, **kwargs):
@@ -545,8 +545,6 @@ class TestSchedulerExecuteCycle:
         # Provide a fake Flask-like app with app_context()
         class FakeApp:
             def app_context(self):
-                from contextlib import contextmanager
-
                 @contextmanager
                 def ctx():
                     yield
@@ -1024,8 +1022,10 @@ class TestResolveSchedulePastCandidates:
     def test_all_candidates_in_past_uses_fallback(self):
         """92->97 and 101->87: all dawn/dusk candidates ≤ current_time → fallback."""
         config = _base_config()
-        # Use a time far in the future so all computed dawn/dusk candidates are in the past
-        far_future = datetime(2099, 7, 15, 20, 0, tzinfo=ZoneInfo('Europe/Paris'))
+        # Use a relative far-future time so computed dawn/dusk candidates are in the past
+        far_future = (
+            datetime.now(ZoneInfo('Europe/Paris')) + timedelta(days=365 * 75)
+        ).replace(hour=20, minute=0, second=0, microsecond=0)
         schedule = resolve_schedule(config, now=far_future)
         assert schedule.mode == 'fallback-6h'
 
@@ -1375,8 +1375,11 @@ class TestRunLoopCacheReadyTimeoutAndAlreadyWaited:
             return {'result': 'ok'}
 
         class _TimedOutEvent:
-            def is_set(self): return False
-            def wait(self, timeout=None): return False
+            def is_set(self):
+                return False
+
+            def wait(self, timeout=None):
+                return False
 
         iter_count = [0]
 
