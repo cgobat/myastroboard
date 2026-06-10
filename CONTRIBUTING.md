@@ -209,31 +209,44 @@ logger.exception("Critical error with stack trace")
 
 ### JavaScript Style Guide
 
+#### Tooling
+
+Formatting is handled by **VSCode's built-in JS formatter** (no Node.js required).
+Open the project in VSCode and formatting applies automatically on save via `.vscode/settings.json`.
+The `.editorconfig` file enforces the same rules (indent, line endings, encoding) in any other editor.
+
+There is no standalone JS linter today. Keep the code clean manually and follow the conventions below.
+
+#### Naming conventions
+
+| Thing | Convention | Example |
+|---|---|---|
+| File names | `snake_case` | `api_helper.js`, `plan_my_night.js` |
+| Functions | `camelCase` | `fetchWeatherData()` |
+| Private helpers | `_camelCase` | `_buildPaginationHtml()` |
+| Variables / constants | `camelCase` | `currentConfig` |
+| Module-level constants | `UPPER_SNAKE_CASE` | `API_BASE` |
+
+#### Code style
+
 - Use **ES6+** modern syntax
-- Use **camelCase** for variable and function names
-- Use **const** by default, **let** when reassignment needed
-- Add **JSDoc comments** for functions
+- Use **`const`** by default, **`let`** when reassignment is needed, never `var`
+- Use **single quotes** for strings
+- **4 spaces** indentation (enforced by `.editorconfig`)
 - Keep functions small and focused
+- Add JSDoc comments for public functions
 
 #### Example:
 ```javascript
 /**
- * Fetches observation data for a specific catalogue
- * @param {string} catalogueName - Name of the catalogue to fetch
- * @param {Object} options - Fetch options
- * @returns {Promise<Object>} Observation data
+ * Fetches observation data for a specific catalogue.
+ * @param {string} catalogueName
+ * @param {Object} options
+ * @returns {Promise<Object>}
  */
 async function fetchCatalogueData(catalogueName, options = {}) {
-    try {
-        const response = await fetch(`/api/catalogue/${catalogueName}`, options);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error(`Error fetching catalogue ${catalogueName}:`, error);
-        throw error;
-    }
+    const response = await fetchJSON(`/api/catalogue/${catalogueName}`, options);
+    return response;
 }
 ```
 
@@ -372,6 +385,8 @@ The failure output lists exactly which routes are unexpected or missing, so you 
    black backend/
    flake8 backend/
    ```
+   For JavaScript, open the file in VSCode — formatting is applied on save automatically.
+   No separate JS lint step is required.
 
 3. **Update documentation** if needed
 

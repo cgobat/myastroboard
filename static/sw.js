@@ -17,7 +17,7 @@ const APP_SHELL_URLS = [
     '/static/css/bs_login.css',
     '/static/js/theme.js',
     '/static/js/i18n.js',
-    '/static/js/apiHelper.js',
+    '/static/js/api_helper.js',
     '/static/js/offline.js',
     '/static/js/notifications.js',
     '/static/i18n/en.json',
