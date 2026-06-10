@@ -664,6 +664,7 @@
     "log_limit_1000": "Derniers 1000",
     "log_limit_5000": "Derniers 5000",
     "log_limit_all": "Tous",
+    "log_module_all": "Tous les modules",
     "log_filter_placeholder": "Filtrer les journaux…",
     "geolocation_btn_title": "Utiliser ma position",
     "geolocation_unsupported": "La géolocalisation n'est pas supportée par votre navigateur.",

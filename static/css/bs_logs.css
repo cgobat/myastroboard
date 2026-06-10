@@ -3,39 +3,87 @@
 .logs-container {
     background: var(--log-bg);
     color: var(--log-text);
-    padding: var(--space-5);
+    padding: var(--space-3) 0;
     border-radius: var(--border-radius-lg);
-    max-height: 500px;
+    max-height: 600px;
     overflow-y: auto;
     font-family: 'Courier New', monospace;
     font-size: 13px;
     line-height: 1.6;
 }
 
+/* Structured log row — 5 fixed-width columns */
 .log-entry {
-    padding: 0.375rem 0;
+    display: grid;
+    grid-template-columns: 9ch 10ch 22ch 26ch 1fr;
+    column-gap: 0.5rem;
+    padding: 0.15rem var(--space-3);
     border-bottom: 1px solid var(--log-border);
+    align-items: baseline;
+    min-width: 0;
 }
 
-.log-entry.log-error {
-    color: var(--log-error-text);
-    background: var(--log-error-bg);
+/* Unmatched lines (tracebacks, continuations) — indent under message column */
+.log-entry.log-continuation {
+    display: block;
+    padding-left: calc(var(--space-3) + 9ch + 10ch + 22ch + 26ch + 2rem);
+    opacity: 0.7;
+    font-style: italic;
 }
 
-.log-entry.log-warning {
-    color: var(--log-warning-text);
-    background: var(--log-warning-bg);
+/* Time column */
+.log-col-time {
+    white-space: nowrap;
+    opacity: 0.7;
+    cursor: default;
 }
 
-.log-entry.log-info {
-    color: var(--log-info-text);
-    background: var(--log-info-bg);
+/* Level badge */
+.log-col-level {
+    text-align: center;
+    border-radius: 3px;
+    padding: 0 0.2rem;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
 }
 
-.log-entry.log-debug {
-    color: var(--log-debug-text);
-    background: var(--log-debug-bg);
+.log-badge-debug    { background: var(--log-debug-text);   color: var(--log-bg); }
+.log-badge-info     { background: var(--log-info-text);    color: var(--log-bg); }
+.log-badge-warning  { background: var(--log-warning-text); color: var(--log-bg); }
+.log-badge-error    { background: var(--log-error-text);   color: var(--log-bg); }
+.log-badge-critical { background: var(--log-error-text);   color: var(--log-bg); }
+
+/* Module column */
+.log-col-module {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.65;
+    cursor: default;
 }
+
+/* Location column */
+.log-col-location {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.55;
+    font-size: 11px;
+    cursor: default;
+}
+
+/* Message column */
+.log-col-message {
+    min-width: 0;
+    word-break: break-word;
+}
+
+/* Row-level tinting */
+.log-entry.log-error   { background: var(--log-error-bg); }
+.log-entry.log-warning { background: var(--log-warning-bg); }
+.log-entry.log-debug   { opacity: 0.8; }
 
 .log-info-header {
     padding: var(--space-3);
