@@ -1,6 +1,7 @@
 // System Metrics Functions
 
 let metricsUpdateInterval = null;
+let metricsLoading = false;
 let processSortState = { key: 'cpu_percent', direction: 'desc' };
 let processShowAll = false;
 
@@ -9,8 +10,10 @@ let processShowAll = false;
 // ======================
 
 async function loadSystemMetrics() {
+    if (metricsLoading) return;
+    metricsLoading = true;
     try {
-        const data = await fetchJSON('/api/metrics');
+        const data = await fetchJSONOnce('/api/metrics', { timeoutMs: 20000 });
         
         if (!data) {
             console.warn('No metrics data received');
@@ -89,8 +92,10 @@ async function loadSystemMetrics() {
         
     } catch (error) {
         console.error('Error loading system metrics:', error);
+    } finally {
+        metricsLoading = false;
     }
-    
+
     // Scheduler status is fetched from a separate endpoint
     updateSchedulerMetrics();
     // Cache jobs metrics from /api/cache
@@ -519,21 +524,22 @@ function formatUptime(seconds) {
 function startMetricsAutoRefresh() {
     initializeProcessTableControls();
 
-    // Clear any existing interval
     if (metricsUpdateInterval) {
-        clearInterval(metricsUpdateInterval);
+        clearTimeout(metricsUpdateInterval);
+        metricsUpdateInterval = null;
     }
-    
-    // Load immediately
-    loadSystemMetrics();
-    
-    // Set up auto-refresh every 5 seconds
-    metricsUpdateInterval = setInterval(loadSystemMetrics, 5000);
+
+    async function runAndReschedule() {
+        await loadSystemMetrics();
+        metricsUpdateInterval = setTimeout(runAndReschedule, 5000);
+    }
+
+    runAndReschedule();
 }
 
 function stopMetricsAutoRefresh() {
     if (metricsUpdateInterval) {
-        clearInterval(metricsUpdateInterval);
+        clearTimeout(metricsUpdateInterval);
         metricsUpdateInterval = null;
     }
 }

@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "title": "MyAstroBoard",
     "title_html": "MyAstroBoard - Astronomical Observation Planning Tool",
@@ -1229,7 +1229,7 @@
   },
   "metrics": {
     "system_metrics": "System Metrics",
-    "info_title": "System performance and resource monitoring. Data refreshes automatically every 5 seconds.",
+    "info_title": "System performance and resource monitoring. Data refreshes automatically every 30 seconds.",
     "cpu": "CPU",
     "cpu_usage": "CPU Usage: ",
     "cpu_info": "CPU Info",

@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "title": "MyAstroBoard",
     "title_html": "MyAstroBoard - Planungstool für astronomische Beobachtungen",
@@ -1229,7 +1229,7 @@
   },
   "metrics": {
     "system_metrics": "Systemmetriken",
-    "info_title": "Systemleistung und Ressourcenüberwachung. Die Daten werden alle 5 Sekunden automatisch aktualisiert.",
+    "info_title": "Systemleistung und Ressourcenüberwachung. Die Daten werden alle 30 Sekunden automatisch aktualisiert.",
     "cpu": "CPU",
     "cpu_usage": "CPU Verwendung:",
     "cpu_info": "CPU Info",

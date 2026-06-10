@@ -4,6 +4,8 @@ Provides container/VM-aware metrics with detailed disk space tracking and proces
 """
 
 import os
+import threading
+import time
 import psutil
 import platform
 from datetime import datetime
@@ -19,6 +21,11 @@ from constants import (
 )
 
 logger = get_logger(__name__)
+
+_metrics_cache_lock = threading.Lock()
+_metrics_cache: dict | None = None
+_metrics_cache_ts: float = 0.0
+_METRICS_CACHE_TTL = 30.0
 
 CONTAINER_PROCESS_HINTS = {
     'dockerd',
@@ -81,11 +88,21 @@ def get_folder_disk_usage(folder_path):
 
     try:
         total_size = 0
-        for dirpath, dirnames, filenames in os.walk(folder_path):
-            for filename in filenames:
-                filepath = os.path.join(dirpath, filename)
-                if os.path.exists(filepath):  # pragma: no branch
-                    total_size += os.path.getsize(filepath)
+        stack = [folder_path]
+        while stack:
+            current = stack.pop()
+            try:
+                with os.scandir(current) as it:
+                    for entry in it:
+                        try:
+                            if entry.is_file(follow_symlinks=False):
+                                total_size += entry.stat(follow_symlinks=False).st_size
+                            elif entry.is_dir(follow_symlinks=False):
+                                stack.append(entry.path)
+                        except (OSError, IOError):
+                            pass
+            except (OSError, IOError):
+                pass
         return total_size
     except (OSError, IOError) as e:
         logger.warning(f"Error calculating disk usage for {folder_path}: {e}")
@@ -154,7 +171,7 @@ def get_environment_processes():
     cpu_count = psutil.cpu_count(logical=True) or 1
 
     for proc in psutil.process_iter(
-        ['pid', 'name', 'status', 'username', 'create_time', 'memory_info', 'memory_percent', 'cpu_times', 'cmdline']
+        ['pid', 'name', 'status', 'create_time', 'memory_info', 'memory_percent', 'cpu_times']
     ):
         try:
             info = proc.info
@@ -176,7 +193,6 @@ def get_environment_processes():
             memory_rss = int(getattr(mem_info, 'rss', 0) or 0)
             memory_percent = float(info.get('memory_percent') or 0.0)
 
-            cmdline = ' '.join(info.get('cmdline') or [])
             lower_name = name.lower()
             is_container_related = any(hint in lower_name for hint in CONTAINER_PROCESS_HINTS)
 
@@ -185,13 +201,11 @@ def get_environment_processes():
                     'pid': pid,
                     'name': name,
                     'status': status,
-                    'username': info.get('username') or 'unknown',
                     'cpu_percent': round(cpu_percent, 2),
                     'memory_rss': memory_rss,
                     'memory_percent': round(memory_percent, 2),
                     'uptime_seconds': int(uptime_seconds),
                     'created_at': datetime.fromtimestamp(created_at).isoformat() if created_at else None,
-                    'cmdline': cmdline,
                     'is_container_related': is_container_related,
                 }
             )
@@ -230,14 +244,20 @@ def detect_docker_in_docker(processes):
 def collect_metrics():
     """
     Collect all system metrics with container/VM detection.
-    Returns comprehensive metrics dictionary.
+    Returns comprehensive metrics dictionary. Result is cached for 30 seconds
+    so rapid or concurrent calls (e.g. from the auto-refresh poll) are cheap.
     """
+    global _metrics_cache, _metrics_cache_ts
+    now = time.monotonic()
+    with _metrics_cache_lock:
+        if _metrics_cache is not None and now - _metrics_cache_ts < _METRICS_CACHE_TTL:
+            return _metrics_cache
     try:
         # Detect environment
         is_container, container_type = is_running_in_container()
 
         # CPU Information
-        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_percent = psutil.cpu_percent(interval=0.1)
         cpu_count_logical = psutil.cpu_count(logical=True)
         cpu_count_physical = psutil.cpu_count(logical=False)
         cpu_freq = psutil.cpu_freq()
@@ -274,7 +294,7 @@ def collect_metrics():
         # Disk space details
         disk_details = get_disk_space_details()
 
-        return {
+        result = {
             'environment': {'is_container': is_container, 'container_type': container_type},
             'cpu': {
                 'percent': cpu_percent,
@@ -317,6 +337,10 @@ def collect_metrics():
             },
             'platform': platform_info,
         }
+        with _metrics_cache_lock:
+            _metrics_cache = result
+            _metrics_cache_ts = time.monotonic()
+        return result
     except Exception as e:
         logger.error(f"Error collecting metrics: {e}", exc_info=True)
         return {'error': str(e), 'timestamp': datetime.now().isoformat()}

@@ -1323,10 +1323,13 @@ def fully_initialize_caches():
                 logger.info(
                     "IERS table absent/stale; downloading synchronously before parallel phase to avoid stale-data warnings"
                 )
+                _iers_start = time.time()
                 try:
                     iers_parallel[1]()
+                    cache_store.record_cache_execution('iers', time.time() - _iers_start, True)
                     success_count += 1
                 except Exception as _iers_pre_err:
+                    cache_store.record_cache_execution('iers', time.time() - _iers_start, False)
                     logger.error("Pre-parallel IERS download failed: %s", _iers_pre_err)
                 parallel = [(n, fn, ttl) for n, fn, ttl in parallel if n != 'iers']
 
