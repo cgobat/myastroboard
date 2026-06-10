@@ -78,26 +78,36 @@ def test_set_global_log_level_updates_file_handlers(monkeypatch):
     assert module.get_current_log_level() == "ERROR"
 
 
-def test_configured_tz_formatter_loads_tz_from_config(monkeypatch, tmp_path):
-    """Lines 44-46: _get_tz() successfully reads timezone from config.json."""
-    import json
-
-    config_data = {"location": {"timezone": "Europe/Paris"}}
-    config_file = tmp_path / "config.json"
-    config_file.write_text(json.dumps(config_data), encoding="utf-8")
-
+def test_configured_tz_formatter_loads_tz_from_env(monkeypatch):
+    """_get_tz() reads the TZ environment variable and returns the matching ZoneInfo."""
     # Reset class state so the lazy loader runs again
-    _ConfiguredTzFormatter._tz = None
+    _ConfiguredTzFormatter._cached_tz = None
     _ConfiguredTzFormatter._tz_resolved = False
 
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("TZ", "Europe/Paris")
 
     tz = _ConfiguredTzFormatter._get_tz()
     assert tz is not None
     assert str(tz) == "Europe/Paris"
 
     # Restore class state so other tests are not affected
-    _ConfiguredTzFormatter._tz = None
+    _ConfiguredTzFormatter._cached_tz = None
+    _ConfiguredTzFormatter._tz_resolved = False
+
+
+def test_configured_tz_formatter_falls_back_to_utc_on_invalid_tz(monkeypatch):
+    """_get_tz() falls back to UTC when TZ names an invalid timezone."""
+    _ConfiguredTzFormatter._cached_tz = None
+    _ConfiguredTzFormatter._tz_resolved = False
+
+    monkeypatch.setenv("TZ", "Not/A/Valid/Timezone")
+
+    tz = _ConfiguredTzFormatter._get_tz()
+    assert tz is not None
+    from datetime import timezone
+    assert tz == timezone.utc
+
+    _ConfiguredTzFormatter._cached_tz = None
     _ConfiguredTzFormatter._tz_resolved = False
 
 

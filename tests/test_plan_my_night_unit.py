@@ -490,10 +490,20 @@ class TestSaveAndLoadUserPlan:
                 "entries": []
             }
         }
-        
+
         save_user_plan(user_id, payload, username="testuser")
         # Should add user_id, so might succeed - implementation dependent
         # Just verify it completes without crashing
+
+    def test_save_plan_validation_failure_returns_false(self, temp_plan_dir):
+        """Saving a plan that fails JSON validation raises ValueError internally and returns False."""
+        user_id = "11111111-1111-4111-8111-222222222222"
+        payload = {
+            "user_id": user_id,
+            "plan": "not-a-dict",  # must be null or an object — validation rejects a string
+        }
+        result = save_user_plan(user_id, payload, username="user")
+        assert result is False
 
 
 class TestIsTargetInEntries:

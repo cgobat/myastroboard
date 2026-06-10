@@ -623,6 +623,8 @@ def _release_lock() -> None:
     lf, _lock_file = _lock_file, None
     try:
         if sys.platform == 'win32':
+            # Seek to 0 to match where the lock was acquired before unlocking
+            lf.seek(0)
             msvcrt.locking(lf.fileno(), msvcrt.LK_UNLCK, 1)
         else:  # pragma: no cover
             fcntl.flock(lf.fileno(), fcntl.LOCK_UN)

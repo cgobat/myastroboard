@@ -371,6 +371,7 @@ class SkyTonightScheduler:
             time.sleep(SKYTONIGHT_SCHEDULER_POLL_INTERVAL_SECONDS)
 
     def _wait_for_initial_cache_ready(self) -> None:
+        self._cache_ready_waited = True
         if self._cache_ready_event is None:
             return
         logger.info('Waiting up to 10 minutes for initial cache update before first SkyTonight run...')

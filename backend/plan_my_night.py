@@ -685,9 +685,8 @@ def get_plan_with_timeline(user_id: str, username: str, telescope_id: Optional[s
 
     if night_start and night_end and night_end > night_start:
         total_seconds = (night_end - night_start).total_seconds()
-        if total_seconds > 0:
-            elapsed_seconds = (now_dt - night_start).total_seconds()
-            progress_percent = max(0.0, min(100.0, (elapsed_seconds / total_seconds) * 100.0))
+        elapsed_seconds = (now_dt - night_start).total_seconds()
+        progress_percent = max(0.0, min(100.0, (elapsed_seconds / total_seconds) * 100.0))
         is_inside_night = night_start <= now_dt <= night_end
 
         start_delay_minutes = int(plan_copy.get('start_delay_minutes') or 0)

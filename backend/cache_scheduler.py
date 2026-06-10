@@ -75,7 +75,8 @@ class CacheScheduler:
         if self._lock_file and self._has_lock:
             try:
                 if sys.platform == "win32":
-                    # Windows file unlocking
+                    # Windows file unlocking — seek to 0 to match where the lock was acquired
+                    self._lock_file.seek(0)
                     msvcrt.locking(self._lock_file.fileno(), msvcrt.LK_UNLCK, 1)
                 else:  # pragma: no cover
                     # Unix file unlocking

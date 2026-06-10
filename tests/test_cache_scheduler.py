@@ -34,6 +34,9 @@ class DummyFile:
     def flush(self):
         return None
 
+    def seek(self, _pos):
+        return None
+
     def close(self):
         self.closed = True
 
@@ -312,12 +315,12 @@ def test_run_does_not_set_cache_ready_twice(monkeypatch):
     assert scheduler.cache_ready_event.is_set()
 
 
-def test_acquire_lock_outer_ioerror_covers_lines_69_70(monkeypatch, tmp_path):
-    """Lines 69-70: IOError from fcntl on non-windows propagates to outer except.
+def test_acquire_lock_fcntl_ioerror_closes_file_and_returns_false(monkeypatch, tmp_path):
+    """IOError from flock on non-windows propagates to outer except.
 
     Open succeeds (lock_file is set), then flock raises → outer except closes file.
-    Lines 61, 69-70, 82 are in the Linux/fcntl branch and are not coverable on Windows
-    (fcntl is not imported). This test is skipped on Windows.
+    The fcntl branch is not coverable on Windows (fcntl is not imported).
+    This test is skipped on Windows.
     """
     import sys
     if sys.platform == "win32":
@@ -383,8 +386,8 @@ def test_run_exception_in_update_all_caches_is_logged(monkeypatch):
     assert calls[0] == 1
 
 
-def test_acquire_lock_write_raises_covers_lines_69_70(monkeypatch, tmp_path):
-    """Lines 69-70: open succeeds (lock_file set) but write raises IOError → outer except closes file."""
+def test_acquire_lock_write_ioerror_closes_file_and_returns_false(monkeypatch, tmp_path):
+    """Open succeeds (lock_file set) but write raises IOError → outer except closes file."""
     scheduler = module.CacheScheduler(interval_seconds=1)
 
     class WriteFailFile(DummyFile):

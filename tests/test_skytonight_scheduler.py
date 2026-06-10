@@ -246,6 +246,9 @@ class TestParseLocalDatetime:
     def test_parse_whitespace_value_returns_none(self):
         assert _parse_local_datetime('   ', 'UTC') is None
 
+    def test_parse_none_value_returns_none(self):
+        assert _parse_local_datetime(None, 'UTC') is None
+
 
 class TestIsServerTimeValid:
     """Cover _is_server_time_valid behavior for valid and invalid inputs."""
@@ -894,7 +897,7 @@ class TestRunLoopBranches:
         self._setup_monkeypatches(monkeypatch)
 
         # Make get_calculation_progress raise inside _write_status
-        with patch('skytonight_scheduler.get_calculation_progress', side_effect=Exception('calc broken')):
+        with patch('skytonight_calculator.get_calculation_progress', side_effect=Exception('calc broken')):
             stored = {}
 
             def _save(payload):
