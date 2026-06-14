@@ -1,3 +1,7 @@
+#### 1.0 Version
+
+Development will now follow a standard cycle based on Roadmap
+
 #### Introduce Connectors & Observatory
 
 Connect external astronomy tools to MyAstroBoard and view their live data in the new Observatory tab.

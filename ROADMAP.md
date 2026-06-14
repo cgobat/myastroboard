@@ -6,33 +6,6 @@ This document describes features that could potentially be integrated into MyAst
 
 ## Release Plan
 
-### v0.9 - Close Web Push + Stabilize
-
-**Objective:** Ship the one half-done feature before declaring stability.
-
-The Web Push infrastructure (VAPID keys, `push_manager.py`, `push_scheduler.py`, API routes, SW handler) is fully built. What remains is end-to-end hardware validation.
-
-- Complete VAPID Web Push E2E test on Android (Chrome) and iOS (Safari)
-- Verify notifications fire correctly when the tab is closed - the main nighttime value
-- Finalize `VAPID_CONTACT_EMAIL` requirement and document it in `1.INSTALLATION.md`
-
-**Exit criteria:** push notification received on a real Android and iOS device; no open P1 bugs; CHANGELOG_NEXT empty.
-
----
-
-### v1.0 - First Stable Release
-
-**Objective:** A clean, self-hostable release that a new user can install and use in under 15 minutes.
-
-- [DONE] Docker `docker compose up` -> usable without manual steps
-- All 6 i18n languages at 0 missing keys (`python scripts/validate_i18n.py` passes clean)
-- API routes stabilized - no breaking route changes after this point
-- Documentation reviewed: `1.INSTALLATION.md`, `docs/` up to date
-
-**Exit criteria:** clean install verified; CI passing; i18n 0 missing keys; no known P1/P2 bugs.
-
----
-
 ### v1.1 - First Light (Beginner Experience)
 
 | | |
@@ -96,10 +69,10 @@ What needs to be built:
 - **i18n** in 6 languages
 - **Pre-requis** - must absolutely check for each external API the limit rate to define a limit of authorized location max.
 - **Concerned modules** - these modules are specifically based on location: #forecast-astro (all subs), #forecast-weather (all subs), /#skytonight, #spaceflight/iss
-- **Astrodex & Plan my night** - use of this location 
+- **Astrodex & Plan my night** - use of this location
 - **Advanced call API** - in case of multiple location there is a high risk that same API will be called multiple time quickly. Must be check if some API allow multiple requests in same call, or make an orchestration of calls following the previous did.
 - **Notifications** - notifications must take care of location in message. Maybe user should have possibility to disable notification for specific location, in user params.
-  
+
 ---
 
 ### v1.3 - Observation Log
