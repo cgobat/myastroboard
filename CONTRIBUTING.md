@@ -257,6 +257,35 @@ async function fetchCatalogueData(catalogueName, options = {}) {
 - Use CSS variables for colors and common values
 - Mobile-first responsive design
 
+### HTML Templates Style Guide
+
+Templates are in `templates/` (Jinja2/Flask) and `static/offline.html`. They are linted with **djlint**.
+
+#### Running the linter
+
+`djlint` is included in `requirements-dev.txt` — no separate install needed if you already set up the dev environment.
+
+```bash
+djlint templates/ static/offline.html --profile jinja --lint --ignore H021,H023,H030,H031,J004,J018
+```
+
+#### Ignored rules and why
+
+| Rule | Reason |
+|------|--------|
+| H021 | Inline styles are used intentionally for JS-driven show/hide (`style="display: none;"`) |
+| H023 | HTML entity references (`&deg;`, `&amp;`) are valid and preferred over raw Unicode in content |
+| H030 | `offline.html` is a PWA fallback page, not a public web page — meta description is irrelevant |
+| H031 | Meta keywords are obsolete and ignored by all modern search engines |
+| J004 | Static assets use versioned URLs (`/static/file.css?v={{ version }}`) for cache-busting instead of `url_for('static', ...)` |
+| J018 | Form actions target explicit API routes (e.g. `/api/auth/login`), not Flask view functions |
+
+#### Conventions
+
+- Form `method` attribute must be **lowercase**: `method="post"`, not `method="POST"`
+- Avoid consecutive blank lines inside markup (djlint H014)
+- New templates should include a `<meta name="description">` unless they are internal/fallback pages
+
 ### Git Commit Messages
 
 Follow these conventions:
@@ -384,6 +413,7 @@ The failure output lists exactly which routes are unexpected or missing, so you 
    pytest
    black backend/
    flake8 backend/
+   djlint templates/ static/offline.html --profile jinja --lint --ignore H021,H023,H030,H031,J004,J018
    ```
    For JavaScript, open the file in VSCode — formatting is applied on save automatically.
    No separate JS lint step is required.
@@ -404,7 +434,7 @@ The failure output lists exactly which routes are unexpected or missing, so you 
    - Link related issues
    - Provide clear description of changes
    - Add screenshots for UI changes
-   - Ensure CI checks pass (`validate-i18n`, `docker-publish`)
+   - Ensure CI checks pass (`validate-i18n`, `validate-html`, `docker-publish`)
 
 3. **Address Review Comments**:
    - Respond to all feedback

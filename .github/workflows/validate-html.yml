@@ -1,0 +1,42 @@
+name: Validate HTML Templates
+
+on:
+  push:
+    paths:
+      - 'templates/*.html'
+      - 'static/offline.html'
+  pull_request:
+    paths:
+      - 'templates/*.html'
+      - 'static/offline.html'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  validate-html:
+    name: HTML lint (djlint)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install djlint
+        run: pip install djlint
+
+      - name: Lint HTML templates
+        # H021: inline styles (used for JS-driven show/hide)
+        # H023: entity references (&deg; etc. are valid HTML)
+        # H030: meta description (offline.html is a PWA fallback, not a public page)
+        # H031: meta keywords (obsolete, ignored by all modern search engines)
+        # J004: url_for() for static assets (project uses versioned URLs intentionally)
+        # J018: url_for() for internal links (project uses explicit API routes)
+        run: djlint templates/ static/offline.html --profile jinja --lint --ignore H021,H023,H030,H031,J004,J018
