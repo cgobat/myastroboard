@@ -12,11 +12,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /build
 
+# Build NumPy from source with a conservative CPU baseline. This avoids
+# producing or downloading wheels that require a specific x86-64 sub-architecture
+# such as x86-64-v2. Override NUMPY_SPEC if requirements.txt pins NumPy.
+ARG NUMPY_SPEC="numpy"
+ARG NUMPY_CPU_BASELINE="none"
+ARG NUMPY_CPU_DISPATCH="max"
+
 # Install build dependencies
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
        build-essential \
        python3-dev \
+       gfortran \
+       pkg-config \
+       libopenblas-dev \
        libffi-dev \
        libssl-dev \
        cargo \
@@ -26,7 +36,14 @@ RUN apt-get update && apt-get upgrade -y \
 # Copy requirements and build wheels
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip wheel --wheel-dir /wheels -r requirements.txt
+    pip wheel --wheel-dir /wheels \
+       --no-binary=numpy \
+       -Csetup-args="-Dcpu-baseline=${NUMPY_CPU_BASELINE}" \
+       -Csetup-args="-Dcpu-dispatch=${NUMPY_CPU_DISPATCH}" \
+       "${NUMPY_SPEC}"
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip wheel --wheel-dir /wheels --find-links=/wheels -r requirements.txt
 
 # Minify static assets during build so production serves pre-minified files
 COPY scripts/minify_static.py ./scripts/minify_static.py
@@ -67,7 +84,8 @@ RUN set -eux; \
        curl \
        ca-certificates \
        tzdata \
-       passwd; \
+       passwd \
+       libopenblas0-pthread; \
     rm -rf /var/lib/apt/lists/* /tmp/* /usr/share/doc /usr/share/man/* /usr/share/info/*
 
 # Copy wheels from builder and install
